@@ -1,93 +1,227 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 
+import { WebView } from 'react-native-webview';
+
+import {
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
+
 import { Ionicons } from '@expo/vector-icons';
+
 import COLORS from '../theme/colors';
 
 export default function TrackingScreen() {
+
+  const navigation = useNavigation<any>();
+
+  const route = useRoute<any>();
+
+  const {
+  destination = 'Unknown Destination',
+  distance = '0 km',
+  eta = '0 min',
+  estimatedFare = '₱0',
+} = route.params || {};
+
+  const [driverDistance, setDriverDistance] =
+    useState('1.2 km');
+
+  const [driverETA, setDriverETA] =
+    useState(4);
+
+  const [status, setStatus] =
+    useState('Driver is on the way');
+
+  useEffect(() => {
+
+    const timer = setInterval(() => {
+
+      setDriverETA((prev) => {
+
+        if (prev <= 1) {
+
+          setStatus('Driver has arrived');
+
+          setDriverDistance('0 km');
+
+          clearInterval(timer);
+
+          return 0;
+
+        }
+
+        return prev - 1;
+
+      });
+
+      setDriverDistance((prev) => {
+
+        switch (prev) {
+
+          case '1.2 km':
+            return '900 m';
+
+          case '900 m':
+            return '500 m';
+
+          case '500 m':
+            return '150 m';
+
+          default:
+            return '0 km';
+
+        }
+
+      });
+
+    }, 5000);
+
+    return () => clearInterval(timer);
+
+  }, []);
+
+  const html = `
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8"/>
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"/>
+
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+
+html,
+body,
+#map{
+
+height:100%;
+margin:0;
+padding:0;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+var map = L.map('map').setView(
+[14.064218,120.622139],
+16
+);
+
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+{
+maxZoom:19
+}
+).addTo(map);
+
+L.marker(
+[14.064218,120.622139]
+).addTo(map)
+.bindPopup('Passenger')
+.openPopup();
+
+L.marker(
+[14.066000,120.624000]
+).addTo(map)
+.bindPopup('Driver');
+
+</script>
+
+</body>
+
+</html>
+`;
+
   return (
-    <SafeAreaView style={styles.container}>
 
-      <Text style={styles.header}>
-        Ride Tracking
-      </Text>
+    <View style={styles.container}>
+            {/* MAP */}
 
-      {/* MAP */}
+      <WebView
+        style={styles.map}
+        originWhitelist={['*']}
+        source={{ html }}
+        javaScriptEnabled
+      />
 
-      <View style={styles.mapContainer}>
-        <Ionicons
-          name="map"
-          size={80}
-          color={COLORS.primary}
-        />
+      {/* HEADER */}
 
-        <Text style={styles.mapText}>
-          Google Maps will appear here
+      <View style={styles.header}>
+
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color="#FFFFFF"
+          />
+
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>
+          Tracking Ride
         </Text>
-      </View>
-
-      {/* LOCATION */}
-
-      <View style={styles.locationCard}>
-
-        <View style={styles.row}>
-          <Ionicons
-            name="location"
-            size={22}
-            color={COLORS.primary}
-          />
-
-          <Text style={styles.locationText}>
-            Pickup: Nasugbu Public Market
-          </Text>
-        </View>
-
-        <View style={styles.row}>
-          <Ionicons
-            name="flag"
-            size={22}
-            color={COLORS.danger}
-          />
-
-          <Text style={styles.locationText}>
-            Destination: BatStateU Nasugbu
-          </Text>
-        </View>
 
       </View>
 
-      {/* DRIVER */}
+      {/* DRIVER CARD */}
 
-      <View style={styles.driverCard}>
+      <View style={styles.bottomCard}>
 
-        <Text style={styles.driverTitle}>
-          Driver Information
+        <Text style={styles.status}>
+          {status}
         </Text>
 
         <View style={styles.driverRow}>
 
           <Ionicons
             name="person-circle"
-            size={70}
+            size={60}
             color={COLORS.primary}
           />
 
-          <View style={{ marginLeft: 15 }}>
+          <View style={styles.driverInfo}>
+
             <Text style={styles.driverName}>
               Juan Dela Cruz
             </Text>
 
-            <Text style={styles.driverInfo}>
-              Tricycle No. TRI-0456
+            <Text style={styles.driverPlate}>
+              Tricycle No. TRV-102
             </Text>
 
-            <Text style={styles.driverInfo}>
+            <Text style={styles.driverRating}>
               ⭐ 4.9 Rating
             </Text>
 
@@ -95,183 +229,384 @@ export default function TrackingScreen() {
 
         </View>
 
+        <View style={styles.infoContainer}>
+
+          <View style={styles.infoBox}>
+
+            <Ionicons
+              name="time"
+              size={24}
+              color={COLORS.primary}
+            />
+
+            <Text style={styles.infoTitle}>
+              ETA
+            </Text>
+
+            <Text style={styles.infoValue}>
+              {driverETA} min
+            </Text>
+
+          </View>
+
+          <View style={styles.infoBox}>
+
+            <Ionicons
+              name="navigate"
+              size={24}
+              color={COLORS.primary}
+            />
+
+            <Text style={styles.infoTitle}>
+              Distance
+            </Text>
+
+            <Text style={styles.infoValue}>
+              {driverDistance}
+            </Text>
+
+          </View>
+
+        </View>
+
+        <View style={styles.destinationCard}>
+
+  <Ionicons
+    name="location"
+    size={22}
+    color={COLORS.primary}
+  />
+
+  <Text style={styles.destinationText}>
+    {destination}
+  </Text>
+
+</View>
+
+        {/* ACTION BUTTONS */}
+
+        <View style={styles.actionRow}>
+
+          <TouchableOpacity
+            style={styles.callButton}
+            onPress={() =>
+              Alert.alert(
+                'Call Driver',
+                'Calling Juan Dela Cruz...'
+              )
+            }
+          >
+
+            <Ionicons
+              name="call"
+              size={22}
+              color="#FFFFFF"
+            />
+
+            <Text style={styles.buttonText}>
+              Call
+            </Text>
+
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.messageButton}
+            onPress={() =>
+              Alert.alert(
+                'Message Driver',
+                'Opening chat...'
+              )
+            }
+          >
+
+            <Ionicons
+              name="chatbubble"
+              size={22}
+              color="#FFFFFF"
+            />
+
+            <Text style={styles.buttonText}>
+              Message
+            </Text>
+
+          </TouchableOpacity>
+
+        </View>
+
+        {/* DRIVER ARRIVED */}
+
+                  <TouchableOpacity
+            style={styles.arrivedButton}
+            disabled={status !== 'Driver has arrived'}
+            onPress={() =>
+              navigation.navigate('TripSummary', {
+                destination,
+                distance,
+                eta,
+                estimatedFare,
+              })
+            }
+          >
+
+          <Ionicons
+            name="checkmark-circle"
+            size={24}
+            color="#FFFFFF"
+          />
+
+          <Text style={styles.arrivedButtonText}>
+            Driver Arrived
+          </Text>
+
+        </TouchableOpacity>
+
+        {/* CANCEL RIDE */}
+
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() =>
+
+            Alert.alert(
+              'Cancel Ride',
+              'Are you sure you want to cancel this ride?',
+              [
+                {
+                  text: 'No',
+                  style: 'cancel',
+                },
+                {
+                  text: 'Yes',
+                  style: 'destructive',
+                  onPress: () =>
+                    navigation.navigate('Main'),
+                },
+              ]
+            )
+
+          }
+        >
+
+          <Ionicons
+            name="close-circle"
+            size={22}
+            color="#E53935"
+          />
+
+          <Text style={styles.cancelText}>
+            Cancel Ride
+          </Text>
+
+        </TouchableOpacity>
+
       </View>
 
-      {/* STATUS */}
+    </View>
 
-      <View style={styles.statusCard}>
-
-        <Text style={styles.statusTitle}>
-          Ride Status
-        </Text>
-
-        <Text style={styles.status}>
-          Driver is on the way...
-        </Text>
-
-      </View>
-
-      {/* BUTTONS */}
-
-      <TouchableOpacity style={styles.callButton}>
-
-        <Ionicons
-          name="call"
-          size={22}
-          color="#fff"
-        />
-
-        <Text style={styles.buttonText}>
-          Call Driver
-        </Text>
-
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.cancelButton}>
-
-        <Ionicons
-          name="close-circle"
-          size={22}
-          color="#fff"
-        />
-
-        <Text style={styles.buttonText}>
-          Cancel Ride
-        </Text>
-
-      </TouchableOpacity>
-
-    </SafeAreaView>
   );
+
 }
 
 const styles = StyleSheet.create({
 
-  container:{
-    flex:1,
-    backgroundColor:COLORS.background,
-    padding:20,
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
 
-  header:{
-    fontSize:28,
-    fontWeight:'bold',
-    color:COLORS.primary,
-    marginBottom:20,
+  map: {
+    flex: 1,
   },
 
-  mapContainer:{
-    height:220,
-    backgroundColor:COLORS.white,
-    borderRadius:20,
-    justifyContent:'center',
-    alignItems:'center',
-    elevation:5,
+  header: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
-  mapText:{
-    marginTop:10,
-    color:COLORS.gray,
-    fontSize:16,
+  backButton: {
+    width: 45,
+    height: 45,
+    borderRadius: 25,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
   },
 
-  locationCard:{
-    backgroundColor:COLORS.white,
-    marginTop:20,
-    borderRadius:20,
-    padding:18,
-    elevation:4,
+  headerTitle: {
+    marginLeft: 15,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.primary,
   },
 
-  row:{
-    flexDirection:'row',
-    alignItems:'center',
-    marginBottom:12,
+  bottomCard: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    bottom: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    elevation: 8,
   },
 
-  locationText:{
-    marginLeft:10,
-    fontSize:16,
-    color:COLORS.black,
+  status: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    textAlign: 'center',
+    marginBottom: 15,
   },
 
-  driverCard:{
-    backgroundColor:COLORS.white,
-    marginTop:20,
-    borderRadius:20,
-    padding:18,
-    elevation:4,
+  driverRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
   },
 
-  driverTitle:{
-    fontSize:18,
-    fontWeight:'bold',
-    color:COLORS.black,
-    marginBottom:15,
+  driverInfo: {
+    marginLeft: 15,
+    flex: 1,
   },
 
-  driverRow:{
-    flexDirection:'row',
-    alignItems:'center',
+  driverName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.black,
   },
 
-  driverName:{
-    fontSize:20,
-    fontWeight:'bold',
-    color:COLORS.black,
+  driverPlate: {
+    marginTop: 5,
+    fontSize: 15,
+    color: COLORS.gray,
   },
 
-  driverInfo:{
-    marginTop:4,
-    color:COLORS.gray,
+  driverRating: {
+    marginTop: 5,
+    fontSize: 15,
+    color: '#F4B400',
+    fontWeight: '600',
   },
 
-  statusCard:{
-    backgroundColor:COLORS.white,
-    marginTop:20,
-    borderRadius:20,
-    padding:18,
-    elevation:4,
+  infoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
 
-  statusTitle:{
-    fontSize:18,
-    fontWeight:'bold',
-    color:COLORS.black,
+  infoBox: {
+    flex: 1,
+    backgroundColor: '#F5F8FF',
+    borderRadius: 15,
+    paddingVertical: 15,
+    marginHorizontal: 5,
+    alignItems: 'center',
   },
 
-  status:{
-    marginTop:10,
-    fontSize:16,
-    color:COLORS.success,
-    fontWeight:'bold',
+  infoTitle: {
+    marginTop: 8,
+    fontSize: 14,
+    color: COLORS.gray,
   },
 
-  callButton:{
-    height:55,
-    backgroundColor:COLORS.primary,
-    borderRadius:15,
-    marginTop:25,
-    justifyContent:'center',
-    alignItems:'center',
-    flexDirection:'row',
+  infoValue: {
+    marginTop: 5,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
   },
 
-  cancelButton:{
-    height:55,
-    backgroundColor:COLORS.danger,
-    borderRadius:15,
-    marginTop:15,
-    justifyContent:'center',
-    alignItems:'center',
-    flexDirection:'row',
+  destinationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F8FF',
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 20,
   },
 
-  buttonText:{
-    color:'#fff',
-    fontWeight:'bold',
-    fontSize:17,
-    marginLeft:8,
+  destinationText: {
+    marginLeft: 10,
+    flex: 1,
+    fontSize: 16,
+    color: COLORS.black,
+    fontWeight: '600',
+  },
+
+  actionRow: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+
+  callButton: {
+    flex: 1,
+    height: 55,
+    backgroundColor: '#34A853',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginRight: 8,
+    elevation: 5,
+  },
+
+  messageButton: {
+    flex: 1,
+    height: 55,
+    backgroundColor: COLORS.primary,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginLeft: 8,
+    elevation: 5,
+  },
+
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+
+  arrivedButton: {
+    height: 55,
+    backgroundColor: COLORS.primary,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    elevation: 5,
+    marginBottom: 15,
+  },
+
+  arrivedButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+
+  cancelButton: {
+    height: 55,
+    borderWidth: 2,
+    borderColor: '#E53935',
+    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+
+  cancelText: {
+    color: '#E53935',
+    fontSize: 17,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
 
 });

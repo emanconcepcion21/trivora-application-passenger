@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   View,
@@ -7,13 +7,27 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
- Alert,
+  TextInput,
+  Alert,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
 export default function ProfileScreen() {
+
+  const [name, setName] = useState('Eman Esguerra');
+  const [email] = useState('emanc6620@gmail.com');
+  const [phone, setPhone] = useState('09678216267');
+  const [address, setAddress] = useState('Nasugbu, Batangas');
+  const [emergency, setEmergency] = useState('09123456789');
+
+  const handleSave = () => {
+    Alert.alert(
+      'Success',
+      'Profile updated successfully.'
+    );
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -35,92 +49,165 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+      >
+
+        {/* HEADER */}
 
         <View style={styles.header}>
 
-          <Image
-            source={{
-              uri: 'https://i.pravatar.cc/300',
-            }}
-            style={styles.avatar}
-          />
+          <View style={styles.avatarContainer}>
+
+            <Image
+              source={{
+                uri: 'https://i.pravatar.cc/300',
+              }}
+              style={styles.avatar}
+            />
+
+            <TouchableOpacity style={styles.cameraButton}>
+
+              <Ionicons
+                name="camera"
+                size={18}
+                color="#fff"
+              />
+
+            </TouchableOpacity>
+
+          </View>
 
           <Text style={styles.name}>
-            Eman Esguerra
+            {name}
           </Text>
 
           <Text style={styles.email}>
-            emanc6620@gmail.com
+            {email}
           </Text>
 
         </View>
 
+        {/* PROFILE CARD */}
+
         <View style={styles.card}>
 
-          {/* PHONE */}
+          <Text style={styles.label}>
+            Full Name
+          </Text>
 
-          <View style={styles.row}>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+          />
 
-            <Ionicons
-              name="call"
-              size={24}
-              color={COLORS.primary}
-            />
+          <Text style={styles.label}>
+            Email
+          </Text>
 
-            <Text style={styles.text}>
-              09678216267
-            </Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            editable={false}
+          />
 
-          </View>
+          <Text style={styles.label}>
+            Mobile Number
+          </Text>
 
-          {/* RATING */}
+          <TextInput
+            style={styles.input}
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+          />
 
-          <View style={styles.row}>
+          <Text style={styles.label}>
+            Address
+          </Text>
 
-            <Ionicons
-              name="star"
-              size={24}
-              color="#FFD700"
-            />
+          <TextInput
+            style={styles.input}
+            value={address}
+            onChangeText={setAddress}
+          />
 
-            <Text style={styles.text}>
-              Passenger Rating: 5.0
-            </Text>
+          <Text style={styles.label}>
+            Emergency Contact
+          </Text>
 
-          </View>
-
-          {/* TOTAL TRIPS */}
-
-          <View style={styles.row}>
-
-            <Image
-              source={require('../assets/tricycle.png')}
-              style={styles.tricycleIcon}
-            />
-
-            <Text style={styles.text}>
-              Total Trips: 25
-            </Text>
-
-          </View>
+          <TextInput
+            style={styles.input}
+            value={emergency}
+            onChangeText={setEmergency}
+            keyboardType="phone-pad"
+          />
 
         </View>
-
-        {/* EDIT PROFILE */}
+                {/* SAVE CHANGES */}
 
         <TouchableOpacity
           style={styles.button}
+          onPress={handleSave}
         >
 
           <Ionicons
-            name="create"
+            name="save"
             size={22}
             color="#fff"
           />
 
           <Text style={styles.buttonText}>
-            Edit Profile
+            Save Changes
+          </Text>
+
+        </TouchableOpacity>
+
+        {/* CHANGE PASSWORD */}
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() =>
+            Alert.alert(
+              'Change Password',
+              'Coming Soon'
+            )
+          }
+        >
+
+          <Ionicons
+            name="lock-closed"
+            size={22}
+            color={COLORS.primary}
+          />
+
+          <Text style={styles.secondaryButtonText}>
+            Change Password
+          </Text>
+
+        </TouchableOpacity>
+
+        {/* RIDE HISTORY */}
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() =>
+            Alert.alert(
+              'Ride History',
+              'Coming Soon'
+            )
+          }
+        >
+
+          <Ionicons
+            name="time"
+            size={22}
+            color={COLORS.primary}
+          />
+
+          <Text style={styles.secondaryButtonText}>
+            Ride History
           </Text>
 
         </TouchableOpacity>
@@ -149,20 +236,24 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F4F7FC',
   },
 
   header: {
-    alignItems: 'center',
     backgroundColor: COLORS.primary,
-    paddingVertical: 40,
+    alignItems: 'center',
+    paddingTop: 40,
+    paddingBottom: 35,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+  },
+
+  avatarContainer: {
+    position: 'relative',
   },
 
   avatar: {
@@ -170,6 +261,20 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
+    borderColor: '#fff',
+  },
+
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
     borderColor: '#fff',
   },
 
@@ -182,60 +287,86 @@ const styles = StyleSheet.create({
 
   email: {
     color: '#E5E7EB',
-    marginTop: 5,
     fontSize: 15,
+    marginTop: 5,
   },
 
   card: {
-    margin: 20,
     backgroundColor: '#fff',
+    marginHorizontal: 20,
+    marginTop: 25,
     borderRadius: 20,
     padding: 20,
     elevation: 5,
   },
 
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
+  label: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.black,
+    marginBottom: 8,
+    marginTop: 15,
   },
 
-  tricycleIcon: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
-    marginRight: 15,
-  },
-
-  text: {
-    fontSize: 17,
+  input: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#D9D9D9',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    backgroundColor: '#F9FAFB',
     color: COLORS.black,
   },
 
   button: {
     marginHorizontal: 20,
+    marginTop: 20,
     height: 55,
-    backgroundColor: COLORS.primary,
     borderRadius: 15,
+    backgroundColor: COLORS.primary,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 5,
+  },
+
+  secondaryButton: {
+    marginHorizontal: 20,
+    marginTop: 15,
+    height: 55,
+    borderRadius: 15,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
     flexDirection: 'row',
-    marginBottom: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
   },
 
   logoutButton: {
     marginHorizontal: 20,
+    marginTop: 15,
+    marginBottom: 40,
     height: 55,
-    backgroundColor: COLORS.danger,
     borderRadius: 15,
+    backgroundColor: '#EF4444',
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 40,
+    elevation: 5,
   },
 
   buttonText: {
     color: '#fff',
+    fontSize: 17,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+
+  secondaryButtonText: {
+    color: COLORS.primary,
     fontSize: 17,
     fontWeight: 'bold',
     marginLeft: 8,

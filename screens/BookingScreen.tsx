@@ -1,209 +1,477 @@
 import React from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Image,
+  Alert,
+  ScrollView,
 } from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 
 import COLORS from '../theme/colors';
 
-export default function BookingConfirmationScreen() {
+export default function BookingScreen() {
+
   const navigation = useNavigation<any>();
 
+  const route = useRoute<any>();
+
+  const {
+    destination,
+    distance,
+    eta,
+    estimatedFare,
+  } = route.params || {
+    destination: 'Unknown Destination',
+    distance: '0 km',
+    eta: '0 mins',
+    estimatedFare: '₱0',
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
 
-      <View style={styles.successContainer}>
+    <View style={styles.container}>
 
-        <Ionicons
-          name="checkmark-circle"
-          size={120}
-          color={COLORS.success}
-        />
+      {/* HEADER */}
 
-        <Text style={styles.title}>
-          Booking Confirmed!
-        </Text>
+      <View style={styles.header}>
 
-        <Text style={styles.subtitle}>
-          Your booking has been accepted.
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color="#FFFFFF"
+          />
+
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>
+          Confirm Booking
         </Text>
 
       </View>
 
-      <View style={styles.card}>
-
-        {/* DRIVER */}
-
-        <View style={styles.row}>
-
-          <Ionicons
-            name="person"
-            size={22}
-            color={COLORS.primary}
-          />
-
-          <Text style={styles.text}>
-            Driver: Juan Dela Cruz
-          </Text>
-
-        </View>
-
-        {/* TRICYCLE */}
-
-        <View style={styles.row}>
-
-          <Image
-            source={require('../assets/tricycle.png')}
-            style={styles.tricycleIcon}
-          />
-
-          <Text style={styles.text}>
-            Tricycle No: TRI-0456
-          </Text>
-
-        </View>
-
-        {/* ETA */}
-
-        <View style={styles.row}>
-
-          <Ionicons
-            name="time"
-            size={22}
-            color={COLORS.primary}
-          />
-
-          <Text style={styles.text}>
-            ETA: 5 Minutes
-          </Text>
-
-        </View>
-
-        {/* FARE */}
-
-        <View style={styles.row}>
-
-          <Ionicons
-            name="cash"
-            size={22}
-            color={COLORS.success}
-          />
-
-          <Text style={styles.text}>
-            Estimated Fare: ₱25
-          </Text>
-
-        </View>
-
-      </View>
-
-      <TouchableOpacity
-        style={styles.trackButton}
-        onPress={() => navigation.navigate('DriverDetails')}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
       >
 
-        <Ionicons
-          name="navigate"
-          size={22}
-          color="#fff"
-        />
+        {/* DRIVER CARD */}
 
-        <Text style={styles.buttonText}>
-          TRACK RIDE
-        </Text>
+        <View style={styles.driverCard}>
 
-      </TouchableOpacity>
+          <Image
+            source={{
+              uri:
+                'https://i.pravatar.cc/300?img=12',
+            }}
+            style={styles.avatar}
+          />
 
-    </SafeAreaView>
+          <Text style={styles.driverName}>
+            Juan Dela Cruz
+          </Text>
+
+          <Text style={styles.rating}>
+            ⭐ 4.9 Rating
+          </Text>
+
+          <View style={styles.infoRow}>
+
+            <Ionicons
+              name="car"
+              size={22}
+              color={COLORS.primary}
+            />
+
+            <Text style={styles.infoText}>
+              Tricycle No. TRV-102
+            </Text>
+
+          </View>
+
+          <View style={styles.infoRow}>
+
+            <Ionicons
+              name="location"
+              size={22}
+              color={COLORS.primary}
+            />
+
+            <Text style={styles.infoText}>
+              {destination}
+            </Text>
+
+          </View>
+
+        </View>
+
+        {/* TRIP DETAILS */}
+
+        <View style={styles.tripCard}>
+
+                      <Text style={styles.cardTitle}>
+            Trip Details
+          </Text>
+
+          <View style={styles.tripRow}>
+
+            <Text style={styles.tripLabel}>
+              Destination
+            </Text>
+
+            <Text style={styles.tripValue}>
+              {destination}
+            </Text>
+
+          </View>
+
+          <View style={styles.tripRow}>
+
+            <Text style={styles.tripLabel}>
+              Estimated Fare
+            </Text>
+
+            <Text style={styles.tripValue}>
+              {estimatedFare}
+            </Text>
+
+          </View>
+
+          <View style={styles.tripRow}>
+
+            <Text style={styles.tripLabel}>
+              Distance
+            </Text>
+
+            <Text style={styles.tripValue}>
+              {distance}
+            </Text>
+
+          </View>
+
+          <View style={styles.tripRow}>
+
+            <Text style={styles.tripLabel}>
+              ETA
+            </Text>
+
+            <Text style={styles.tripValue}>
+              {eta}
+            </Text>
+
+          </View>
+
+        </View>
+
+        {/* DRIVER ACTIONS */}
+
+        <View style={styles.actionContainer}>
+
+          <TouchableOpacity
+            style={styles.callButton}
+            onPress={() =>
+              Alert.alert(
+                'Call Driver',
+                'Calling Juan Dela Cruz...'
+              )
+            }
+          >
+
+            <Ionicons
+              name="call"
+              size={22}
+              color="#FFFFFF"
+            />
+
+            <Text style={styles.actionButtonText}>
+              Call
+            </Text>
+
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.messageButton}
+            onPress={() =>
+              Alert.alert(
+                'Message Driver',
+                'Opening chat...'
+              )
+            }
+          >
+
+            <Ionicons
+              name="chatbubble"
+              size={22}
+              color="#FFFFFF"
+            />
+
+            <Text style={styles.actionButtonText}>
+              Message
+            </Text>
+
+          </TouchableOpacity>
+
+        </View>
+                {/* CONFIRM BOOKING */}
+
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={() =>
+            navigation.navigate('Tracking', {
+              destination,
+              distance,
+              eta,
+              estimatedFare,
+            })
+          }
+        >
+
+          <Ionicons
+            name="checkmark-circle"
+            size={22}
+            color="#FFFFFF"
+          />
+
+          <Text style={styles.confirmButtonText}>
+            Confirm Booking
+          </Text>
+
+        </TouchableOpacity>
+
+        {/* CANCEL BOOKING */}
+
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() =>
+
+            Alert.alert(
+              'Cancel Booking',
+              'Are you sure you want to cancel this booking?',
+              [
+                {
+                  text: 'No',
+                  style: 'cancel',
+                },
+                {
+                  text: 'Yes',
+                  style: 'destructive',
+                  onPress: () => navigation.goBack(),
+                },
+              ]
+            )
+
+          }
+        >
+
+          <Ionicons
+            name="close-circle"
+            size={22}
+            color="#E53935"
+          />
+
+          <Text style={styles.cancelButtonText}>
+            Cancel Booking
+          </Text>
+
+        </TouchableOpacity>
+
+      </ScrollView>
+
+    </View>
+
   );
-}
 
+}
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: 20,
-    justifyContent: 'center',
+    backgroundColor: '#F4F8FF',
+    paddingTop: 50,
+    paddingHorizontal: 20,
   },
 
-  successContainer: {
-    alignItems: 'center',
-    marginBottom: 35,
-  },
-
-  title: {
-    marginTop: 20,
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: COLORS.success,
-  },
-
-  subtitle: {
-    marginTop: 8,
-    fontSize: 16,
-    color: COLORS.gray,
-    textAlign: 'center',
-  },
-
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 20,
-
-    elevation: 5,
-
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-  },
-
-  row: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 12,
+    marginBottom: 20,
   },
 
-  tricycleIcon: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
-    marginRight: 15,
-  },
-
-  text: {
-    fontSize: 17,
-    color: COLORS.black,
-    fontWeight: '600',
-  },
-
-  trackButton: {
-    marginTop: 35,
-    height: 58,
-    borderRadius: 15,
+  backButton: {
+    width: 45,
+    height: 45,
+    borderRadius: 23,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
+    elevation: 5,
   },
 
-  buttonText: {
-    marginLeft: 10,
-    color: '#fff',
+  headerTitle: {
+    marginLeft: 15,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+
+  driverCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    elevation: 5,
+    marginBottom: 20,
+  },
+
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 15,
+  },
+
+  driverName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: COLORS.black,
+  },
+
+  rating: {
+    fontSize: 16,
+    color: '#F4B400',
+    marginTop: 5,
+    marginBottom: 20,
+  },
+
+  infoRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+
+  infoText: {
+    marginLeft: 12,
+    fontSize: 16,
+    color: COLORS.black,
+    flex: 1,
+  },
+
+  tripCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    elevation: 5,
+    marginBottom: 20,
+  },
+
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 15,
+  },
+
+  tripRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+  },
+
+  tripLabel: {
+    fontSize: 16,
+    color: COLORS.gray,
+  },
+
+  tripValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+
+  actionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+
+  callButton: {
+    flex: 1,
+    height: 55,
+    backgroundColor: '#34A853',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginRight: 8,
+    elevation: 4,
+  },
+
+  messageButton: {
+    flex: 1,
+    height: 55,
+    backgroundColor: COLORS.primary,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginLeft: 8,
+    elevation: 4,
+  },
+
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+
+  confirmButton: {
+    height: 58,
+    backgroundColor: COLORS.primary,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    elevation: 5,
+    marginBottom: 15,
+  },
+
+  confirmButtonText: {
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    letterSpacing: 1,
+    marginLeft: 10,
+  },
+
+  cancelButton: {
+    height: 55,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#E53935',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 30,
+  },
+
+  cancelButtonText: {
+    color: '#E53935',
+    fontSize: 17,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
 
 });

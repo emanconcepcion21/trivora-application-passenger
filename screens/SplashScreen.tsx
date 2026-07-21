@@ -33,25 +33,21 @@ export default function SplashScreen() {
 
       <View style={styles.content}>
 
+        {/* TRIVORA LOGO */}
+
         <Image
-          source={{
-            uri: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png',
-          }}
+          source={require('../assets/trivora_icon.png')}
           style={styles.logo}
         />
 
-        <Text style={styles.title}>
-          TRIVORA
-        </Text>
-
         <Text style={styles.subtitle}>
-          Passenger Application
+          TriVora Application
         </Text>
 
         <ActivityIndicator
           size="large"
           color="#FFFFFF"
-          style={{ marginTop: 40 }}
+          style={styles.loading}
         />
 
       </View>
@@ -73,7 +69,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 80,
+    paddingTop: 40,
+    paddingBottom: 40,
   },
 
   content: {
@@ -83,27 +80,30 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 160,
-    height: 160,
-    marginBottom: 25,
-  },
-
-  title: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    letterSpacing: 3,
+    width: 290,
+    height: 290,
+    resizeMode: 'contain',
+    marginBottom: -10,
   },
 
   subtitle: {
-    fontSize: 18,
-    color: '#E5E7EB',
-    marginTop: 10,
+    fontSize: 22,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginTop: -10,
+  },
+
+  loading: {
+    marginTop: 50,
+    transform: [{ scale: 1.3 }],
   },
 
   version: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 10,
   },
 
 });

@@ -17,58 +17,80 @@ import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
 export default function LoginScreen() {
+
   const navigation = useNavigation<any>();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = () => {
+
     setLoading(true);
 
     setTimeout(() => {
+
       setLoading(false);
 
       navigation.replace('Main');
+
     }, 1500);
+
   };
 
   return (
+
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={COLORS.primary} barStyle="light-content" />
+
+      <StatusBar
+        backgroundColor={COLORS.primary}
+        barStyle="light-content"
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}>
-        {/* Logo */}
+        contentContainerStyle={styles.scroll}
+      >
+
+        {/* LOGO */}
 
         <View style={styles.logoContainer}>
+
           <Image
-            source={{
-              uri: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png',
-            }}
+            source={require('../assets/trivora_icon.png')}
             style={styles.logo}
           />
 
-          <Text style={styles.appName}>TRIVORA</Text>
+          {/* Tinanggal na ang duplicate na TRIVORA */}
 
-          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.title}>
+            Welcome Back
+          </Text>
 
           <Text style={styles.subtitle}>
             Login to continue using the TRIVORA Passenger App.
           </Text>
+
         </View>
 
-        {/* Card */}
+        {/* LOGIN CARD */}
 
         <View style={styles.card}>
-          {/* Email */}
 
-          <Text style={styles.label}>Email Address</Text>
+          <Text style={styles.label}>
+            Email Address
+          </Text>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={22} color={COLORS.gray} />
+
+            <Ionicons
+              name="mail-outline"
+              size={22}
+              color={COLORS.gray}
+            />
 
             <TextInput
               placeholder="Enter your email"
@@ -77,14 +99,17 @@ export default function LoginScreen() {
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
+              autoCapitalize="none"
             />
+
           </View>
 
-          {/* Password */}
-
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>
+            Password
+          </Text>
 
           <View style={styles.inputContainer}>
+
             <Ionicons
               name="lock-closed-outline"
               size={22}
@@ -100,61 +125,111 @@ export default function LoginScreen() {
               onChangeText={setPassword}
             />
 
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+            >
+
               <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                name={
+                  showPassword
+                    ? 'eye-off-outline'
+                    : 'eye-outline'
+                }
                 size={22}
                 color={COLORS.gray}
               />
-            </TouchableOpacity>
-          </View>
 
-          {/* Remember */}
+            </TouchableOpacity>
+
+          </View>
+                    {/* OPTIONS */}
 
           <View style={styles.options}>
+
             <TouchableOpacity
               style={styles.remember}
-              onPress={() => setRememberMe(!rememberMe)}>
+              onPress={() =>
+                setRememberMe(!rememberMe)
+              }
+            >
+
               <Ionicons
-                name={rememberMe ? 'checkbox' : 'square-outline'}
+                name={
+                  rememberMe
+                    ? 'checkbox'
+                    : 'square-outline'
+                }
                 size={22}
                 color={COLORS.primary}
               />
 
-              <Text style={styles.rememberText}>Remember Me</Text>
+              <Text style={styles.rememberText}>
+                Remember Me
+              </Text>
+
             </TouchableOpacity>
 
             <TouchableOpacity>
-              <Text style={styles.forgot}>Forgot Password?</Text>
+
+              <Text style={styles.forgot}>
+                Forgot Password?
+              </Text>
+
             </TouchableOpacity>
+
           </View>
 
-          {/* Login Button */}
+          {/* LOGIN BUTTON */}
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin}
+          >
+
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.loginText}>LOGIN</Text>
+              <Text style={styles.loginText}>
+                LOGIN
+              </Text>
             )}
+
           </TouchableOpacity>
 
-          {/* Register */}
+          {/* REGISTER */}
 
           <View style={styles.bottom}>
-            <Text style={styles.bottomText}>Don't have an account?</Text>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.register}>Create Account</Text>
+            <Text style={styles.bottomText}>
+              Don't have an account?
+            </Text>
+
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('Register')
+              }
+            >
+
+              <Text style={styles.register}>
+                Create Account
+              </Text>
+
             </TouchableOpacity>
+
           </View>
+
         </View>
+
       </ScrollView>
+
     </SafeAreaView>
+
   );
+
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -168,24 +243,19 @@ const styles = StyleSheet.create({
 
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginTop: 20,
+    marginBottom: 20,
   },
 
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 15,
-  },
-
-  appName: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    letterSpacing: 1,
+    width: 270,
+    height: 150,
+    resizeMode: 'contain',
+    marginBottom: 10,
   },
 
   title: {
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: 'bold',
     color: COLORS.black,
     marginTop: 15,
@@ -215,8 +285,7 @@ const styles = StyleSheet.create({
       height: 5,
     },
   },
-
-  label: {
+    label: {
     fontSize: 15,
     fontWeight: '600',
     color: COLORS.black,
@@ -227,16 +296,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-
     backgroundColor: '#F8FAFC',
-
     borderWidth: 1,
     borderColor: COLORS.border,
-
     borderRadius: 15,
-
     paddingHorizontal: 15,
-
     height: 58,
   },
 
@@ -249,11 +313,8 @@ const styles = StyleSheet.create({
 
   options: {
     marginTop: 18,
-
     flexDirection: 'row',
-
     justifyContent: 'space-between',
-
     alignItems: 'center',
   },
 
@@ -276,17 +337,11 @@ const styles = StyleSheet.create({
 
   loginButton: {
     marginTop: 30,
-
     backgroundColor: COLORS.primary,
-
     borderRadius: 15,
-
     height: 58,
-
     justifyContent: 'center',
-
     alignItems: 'center',
-
     elevation: 5,
   },
 
@@ -315,4 +370,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
   },
+
 });
