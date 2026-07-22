@@ -1,20 +1,26 @@
 import React from 'react';
+import { useNavigation } from '@react-navigation/native';
 import {
   TouchableOpacity,
   Text,
   StyleSheet,
+  Image,
 } from 'react-native';
 
-import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
 export default function BookRideButton() {
+  const navigation = useNavigation<any>();
+
   return (
-    <TouchableOpacity style={styles.button}>
-      <Ionicons
-        name="car-sport"
-        size={28}
-        color="#FFFFFF"
+    <TouchableOpacity
+      style={styles.button}
+      activeOpacity={0.85}
+      onPress={() => navigation.navigate('Booking')}
+    >
+      <Image
+        source={require('../assets/tricycle.png')}
+        style={styles.tricycleIcon}
       />
 
       <Text style={styles.text}>
@@ -37,6 +43,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
 
     elevation: 5,
+  },
+
+  tricycleIcon: {
+    width: 32,
+    height: 32,
+    tintColor: '#FFFFFF',
+    resizeMode: 'contain',
   },
 
   text: {

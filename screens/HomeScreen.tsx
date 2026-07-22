@@ -14,7 +14,6 @@ import MapPreview from '../components/MapPreview';
 import BookRideButton from '../components/BookRideButton';
 import QuickServices from '../components/QuickServices';
 import RecentTripCard from '../components/RecentTripCard';
-import PromoBanner from '../components/PromoBanner';
 
 export default function HomeScreen() {
   return (
@@ -36,8 +35,6 @@ export default function HomeScreen() {
         <QuickServices />
 
         <RecentTripCard />
-
-        <PromoBanner />
       </ScrollView>
     </SafeAreaView>
   );
