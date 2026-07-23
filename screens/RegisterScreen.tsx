@@ -92,15 +92,9 @@ export default function RegisterScreen() {
         <View style={styles.logoContainer}>
 
           <Image
-            source={{
-              uri: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png',
-            }}
+            source={require('../assets/trivora_icon.png')}
             style={styles.logo}
           />
-
-          <Text style={styles.appName}>
-            TRIVORA
-          </Text>
 
           <Text style={styles.title}>
             Create Account
@@ -345,9 +339,10 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 15,
+    width: 250,
+    height: 130,
+    resizeMode: 'contain',
+    marginBottom: 5,
   },
 
   appName: {

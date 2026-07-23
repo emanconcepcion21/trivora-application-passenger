@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import {
   SafeAreaView,
   View,
@@ -15,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
 export default function ProfileScreen() {
+  const navigation = useNavigation<any>();
 
   const [name, setName] = useState('Eman Esguerra');
   const [email] = useState('emanc6620@gmail.com');
@@ -40,7 +42,8 @@ export default function ProfileScreen() {
         },
         {
           text: 'Logout',
-          onPress: () => Alert.alert('Logged Out'),
+          style: 'destructive',
+          onPress: () => navigation.replace('Login'),
         },
       ]
     );
@@ -168,12 +171,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           style={styles.secondaryButton}
-          onPress={() =>
-            Alert.alert(
-              'Change Password',
-              'Coming Soon'
-            )
-          }
+          onPress={() => navigation.navigate('ChangePassword')}
         >
 
           <Ionicons
@@ -192,12 +190,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           style={styles.secondaryButton}
-          onPress={() =>
-            Alert.alert(
-              'Ride History',
-              'Coming Soon'
-            )
-          }
+          onPress={() => navigation.navigate('History')}
         >
 
           <Ionicons
