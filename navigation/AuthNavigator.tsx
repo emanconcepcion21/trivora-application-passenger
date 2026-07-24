@@ -6,6 +6,7 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+import MapScreen from '../screens/MapScreen';
 
 import BottomTabs from './BottomTabs';
 
@@ -15,7 +16,7 @@ import DriverDetailsScreen from '../screens/DriverDetailsScreen';
 import BookingConfirmationScreen from '../screens/BookingConfirmationScreen';
 import TripSummaryScreen from '../screens/TripSummaryScreen';
 import RateDriverScreen from '../screens/RateDriverScreen';
-import MapScreen from '../screens/MapScreen';
+import SearchingDriverScreen from '../screens/SearchingDriverScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -54,13 +55,13 @@ export default function AuthNavigator() {
         component={ChangePasswordScreen}
       />
 
-      {/* Main App */}
+      {/* Main Application */}
       <Stack.Screen
         name="Main"
         component={BottomTabs}
       />
 
-      {/* Google Map */}
+      {/* Map */}
       <Stack.Screen
         name="Map"
         component={MapScreen}
@@ -70,6 +71,11 @@ export default function AuthNavigator() {
       <Stack.Screen
         name="Booking"
         component={BookingScreen}
+      />
+
+      <Stack.Screen
+        name="BookingConfirmation"
+        component={BookingConfirmationScreen}
       />
 
       <Stack.Screen
@@ -83,11 +89,6 @@ export default function AuthNavigator() {
       />
 
       <Stack.Screen
-        name="BookingConfirmation"
-        component={BookingConfirmationScreen}
-      />
-
-      <Stack.Screen
         name="TripSummary"
         component={TripSummaryScreen}
       />
@@ -96,6 +97,10 @@ export default function AuthNavigator() {
         name="RateDriver"
         component={RateDriverScreen}
       />
+      <Stack.Screen
+  name="SearchingDriver"
+  component={SearchingDriverScreen}
+/>
     </Stack.Navigator>
   );
 }

@@ -29,83 +29,230 @@ export default function ChangePasswordScreen() {
 
   const [loading, setLoading] = useState(false);
 
-  const handleChangePassword = () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Required Fields', 'Please fill in all password fields.');
+  const handleChangePassword = async () => {
+
+    // CHECK EMPTY FIELDS
+
+    if (
+      !currentPassword ||
+      !newPassword ||
+      !confirmPassword
+    ) {
+      Alert.alert(
+        'Required Fields',
+        'Please fill in all password fields.'
+      );
+
       return;
     }
+
+    // CHECK PASSWORD LENGTH
 
     if (newPassword.length < 6) {
-      Alert.alert('Weak Password', 'New password must be at least 6 characters.');
+      Alert.alert(
+        'Weak Password',
+        'New password must be at least 6 characters.'
+      );
+
       return;
     }
+
+    // CHECK PASSWORD MATCH
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Mismatch', 'New password and confirm password do not match.');
+      Alert.alert(
+        'Mismatch',
+        'New password and confirm password do not match.'
+      );
+
       return;
     }
 
+    // CHECK SAME PASSWORD
+
     if (currentPassword === newPassword) {
-      Alert.alert('Invalid Password', 'New password must be different from current password.');
+      Alert.alert(
+        'Invalid Password',
+        'New password must be different from current password.'
+      );
+
       return;
     }
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert(
-        'Success',
-        'Your password has been changed successfully.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack(),
+    try {
+
+      // IMPORTANT:
+      // TEMPORARY PASSENGER ID
+      //
+      // Since we removed AsyncStorage,
+      // use the logged-in passenger ID here.
+      //
+      // Palitan ito kapag may proper session/user state na tayo.
+
+      const passengerId = 2;
+
+      const response = await fetch(
+        'http://192.168.8.33/passenger_api/change_password.php',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json',
           },
-        ]
+
+          body: JSON.stringify({
+            id: passengerId,
+            current_password: currentPassword,
+            new_password: newPassword,
+            confirm_password: confirmPassword,
+          }),
+        }
       );
-    }, 1500);
+
+      const data = await response.json();
+
+      console.log(
+        'CHANGE PASSWORD RESPONSE:',
+        data
+      );
+
+      if (data.success) {
+
+        Alert.alert(
+          'Success',
+          data.message ||
+            'Your password has been changed successfully.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+
+                // CLEAR PASSWORD FIELDS
+
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+
+                // GO BACK
+
+                navigation.goBack();
+
+              },
+            },
+          ]
+        );
+
+      } else {
+
+        Alert.alert(
+          'Change Password Failed',
+          data.message ||
+            'Unable to change password.'
+        );
+
+      }
+
+    } catch (error) {
+
+      console.log(
+        'CHANGE PASSWORD ERROR:',
+        error
+      );
+
+      Alert.alert(
+        'Connection Error',
+        'Unable to connect to the server. Please make sure XAMPP Apache is running.'
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={COLORS.primary} barStyle="light-content" />
+
+      <StatusBar
+        backgroundColor={COLORS.primary}
+        barStyle="light-content"
+      />
 
       {/* HEADER */}
+
       <View style={styles.header}>
+
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color={COLORS.black} />
+
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={COLORS.black}
+          />
+
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Change Password</Text>
+        <Text style={styles.headerTitle}>
+          Change Password
+        </Text>
 
         <View style={{ width: 40 }} />
+
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
       >
+
         {/* BANNER HEADER */}
+
         <View style={styles.bannerContainer}>
+
           <View style={styles.iconCircle}>
-            <Ionicons name="key" size={36} color="#FFFFFF" />
+
+            <Ionicons
+              name="key"
+              size={36}
+              color="#FFFFFF"
+            />
+
           </View>
-          <Text style={styles.title}>Update Your Password</Text>
+
+          <Text style={styles.title}>
+            Update Your Password
+          </Text>
+
           <Text style={styles.subtitle}>
             Enter your current password and choose a strong new password to protect your account.
           </Text>
+
         </View>
 
         {/* CARD */}
+
         <View style={styles.card}>
+
           {/* CURRENT PASSWORD */}
-          <Text style={styles.label}>Current Password</Text>
+
+          <Text style={styles.label}>
+            Current Password
+          </Text>
+
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={22} color={COLORS.gray} />
+
+            <Ionicons
+              name="lock-closed-outline"
+              size={22}
+              color={COLORS.gray}
+            />
+
             <TextInput
               placeholder="Enter current password"
               placeholderTextColor="#999"
@@ -114,19 +261,41 @@ export default function ChangePasswordScreen() {
               value={currentPassword}
               onChangeText={setCurrentPassword}
             />
-            <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)}>
+
+            <TouchableOpacity
+              onPress={() =>
+                setShowCurrent(!showCurrent)
+              }
+            >
+
               <Ionicons
-                name={showCurrent ? 'eye-off-outline' : 'eye-outline'}
+                name={
+                  showCurrent
+                    ? 'eye-off-outline'
+                    : 'eye-outline'
+                }
                 size={22}
                 color={COLORS.gray}
               />
+
             </TouchableOpacity>
+
           </View>
 
           {/* NEW PASSWORD */}
-          <Text style={styles.label}>New Password</Text>
+
+          <Text style={styles.label}>
+            New Password
+          </Text>
+
           <View style={styles.inputContainer}>
-            <Ionicons name="key-outline" size={22} color={COLORS.gray} />
+
+            <Ionicons
+              name="key-outline"
+              size={22}
+              color={COLORS.gray}
+            />
+
             <TextInput
               placeholder="Enter new password"
               placeholderTextColor="#999"
@@ -135,19 +304,41 @@ export default function ChangePasswordScreen() {
               value={newPassword}
               onChangeText={setNewPassword}
             />
-            <TouchableOpacity onPress={() => setShowNew(!showNew)}>
+
+            <TouchableOpacity
+              onPress={() =>
+                setShowNew(!showNew)
+              }
+            >
+
               <Ionicons
-                name={showNew ? 'eye-off-outline' : 'eye-outline'}
+                name={
+                  showNew
+                    ? 'eye-off-outline'
+                    : 'eye-outline'
+                }
                 size={22}
                 color={COLORS.gray}
               />
+
             </TouchableOpacity>
+
           </View>
 
           {/* CONFIRM NEW PASSWORD */}
-          <Text style={styles.label}>Confirm New Password</Text>
+
+          <Text style={styles.label}>
+            Confirm New Password
+          </Text>
+
           <View style={styles.inputContainer}>
-            <Ionicons name="shield-checkmark-outline" size={22} color={COLORS.gray} />
+
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={22}
+              color={COLORS.gray}
+            />
+
             <TextInput
               placeholder="Re-enter new password"
               placeholderTextColor="#999"
@@ -156,34 +347,61 @@ export default function ChangePasswordScreen() {
               value={confirmPassword}
               onChangeText={setConfirmPassword}
             />
-            <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+
+            <TouchableOpacity
+              onPress={() =>
+                setShowConfirm(!showConfirm)
+              }
+            >
+
               <Ionicons
-                name={showConfirm ? 'eye-off-outline' : 'eye-outline'}
+                name={
+                  showConfirm
+                    ? 'eye-off-outline'
+                    : 'eye-outline'
+                }
                 size={22}
                 color={COLORS.gray}
               />
+
             </TouchableOpacity>
+
           </View>
 
           {/* UPDATE BUTTON */}
+
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={handleChangePassword}
             disabled={loading}
           >
+
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+
+              <ActivityIndicator
+                color="#FFFFFF"
+              />
+
             ) : (
-              <Text style={styles.buttonText}>UPDATE PASSWORD</Text>
+
+              <Text style={styles.buttonText}>
+                UPDATE PASSWORD
+              </Text>
+
             )}
+
           </TouchableOpacity>
+
         </View>
+
       </ScrollView>
+
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -209,7 +427,10 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
   },
 
   headerTitle: {
@@ -313,4 +534,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 1,
   },
+
 });

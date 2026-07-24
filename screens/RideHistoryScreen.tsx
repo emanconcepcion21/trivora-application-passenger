@@ -1,7 +1,5 @@
 import React from 'react';
-
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -9,44 +7,37 @@ import {
   Image,
 } from 'react-native';
 
-import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
 const rides = [
   {
     id: '1',
-    date: 'July 18, 2026',
-    pickup: 'Nasugbu Public Market',
-    destination: 'BatStateU Nasugbu',
-    fare: '₱25',
-    driver: 'Juan Dela Cruz',
+    destination: 'Nasugbu Plaza',
+    fare: '₱35',
+    date: 'July 24, 2026',
     status: 'Completed',
   },
   {
     id: '2',
-    date: 'July 17, 2026',
-    pickup: 'Jollibee Nasugbu',
-    destination: 'Wawa',
-    fare: '₱18',
-    driver: 'Pedro Santos',
+    destination: 'Brgy. Wawa',
+    fare: '₱40',
+    date: 'July 23, 2026',
     status: 'Completed',
   },
   {
     id: '3',
-    date: 'July 16, 2026',
-    pickup: 'SM Hypermarket',
-    destination: 'Kaylaway',
-    fare: '₱35',
-    driver: 'Mark Reyes',
-    status: 'Cancelled',
+    destination: 'Brgy. Bucana',
+    fare: '₱55',
+    date: 'July 22, 2026',
+    status: 'Completed',
   },
 ];
 
 export default function RideHistoryScreen() {
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
 
-      <Text style={styles.header}>
+      <Text style={styles.title}>
         Ride History
       </Text>
 
@@ -55,98 +46,54 @@ export default function RideHistoryScreen() {
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-
           <View style={styles.card}>
 
-            <View style={styles.topRow}>
+            <View style={styles.iconContainer}>
 
               <Image
-  source={require('../assets/tricycle.png')}
-  style={styles.tricycleIcon}
-/>
+                source={require('../assets/tricycle.png')}
+                style={styles.tricycle}
+              />
 
-              <View style={{ flex: 1, marginLeft: 12 }}>
+            </View>
 
-                <Text style={styles.date}>
-                  {item.date}
-                </Text>
+            <View style={styles.info}>
 
-                <Text style={styles.driver}>
-                  Driver: {item.driver}
-                </Text>
+              <Text style={styles.destination}>
+                {item.destination}
+              </Text>
 
-              </View>
+              <Text style={styles.date}>
+                {item.date}
+              </Text>
 
-              <Text
-                style={[
-                  styles.status,
-                  {
-                    color:
-                      item.status === 'Completed'
-                        ? COLORS.success
-                        : COLORS.danger,
-                  },
-                ]}
-              >
+              <Text style={styles.status}>
                 {item.status}
               </Text>
 
             </View>
 
-            <View style={styles.locationRow}>
-
-              <Ionicons
-                name="location"
-                size={20}
-                color={COLORS.primary}
-              />
-
-              <Text style={styles.locationText}>
-                {item.pickup}
-              </Text>
-
-            </View>
-
-            <View style={styles.locationRow}>
-
-              <Ionicons
-                name="flag"
-                size={20}
-                color={COLORS.danger}
-              />
-
-              <Text style={styles.locationText}>
-                {item.destination}
-              </Text>
-
-            </View>
-
-            <View style={styles.bottomRow}>
-
-              <Text style={styles.fare}>
-                Fare: {item.fare}
-              </Text>
-
-            </View>
+            <Text style={styles.fare}>
+              {item.fare}
+            </Text>
 
           </View>
-
         )}
       />
 
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: 20,
+    backgroundColor: '#F5F7FB',
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
 
-  header: {
+  title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.primary,
@@ -154,63 +101,57 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: COLORS.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 18,
     marginBottom: 15,
-    elevation: 4,
+    elevation: 5,
   },
 
-  topRow: {
-    flexDirection: 'row',
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
     alignItems: 'center',
   },
 
-  date: {
+  tricycle: {
+    width: 28,
+    height: 28,
+    resizeMode: 'contain',
+    tintColor: '#FFFFFF',
+  },
+
+  info: {
+    flex: 1,
+    marginLeft: 15,
+  },
+
+  destination: {
     fontSize: 17,
     fontWeight: 'bold',
     color: COLORS.black,
   },
 
-  driver: {
+  date: {
     marginTop: 4,
-    color: COLORS.gray,
+    fontSize: 14,
+    color: '#777',
   },
 
   status: {
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 15,
-  },
-
-  locationText: {
-    marginLeft: 10,
-    color: COLORS.black,
-    fontSize: 15,
-  },
-
-  bottomRow: {
-    marginTop: 18,
-    borderTopWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingTop: 12,
+    marginTop: 6,
+    color: '#16A34A',
+    fontWeight: '600',
   },
 
   fare: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.success,
+    color: COLORS.primary,
   },
-
-  tricycleIcon: {
-  width: 38,
-  height: 38,
-  resizeMode: 'contain',
-},
-
 });

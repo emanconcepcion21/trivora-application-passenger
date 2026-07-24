@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
+
 import {
   SafeAreaView,
   View,
@@ -11,6 +12,7 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -27,23 +29,110 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+
+    // BASIC VALIDATION
+
+    if (!email.trim() || !password.trim()) {
+
+      Alert.alert(
+        'Login Required',
+        'Please enter your email and password.'
+      );
+
+      return;
+    }
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+
+      const response = await fetch(
+        'http://192.168.8.33/passenger_api/login.php',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            email: email.trim(),
+            password: password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      console.log(
+        'LOGIN RESPONSE:',
+        data
+      );
+
+      if (data.success) {
+
+        Alert.alert(
+          'Login Successful',
+          `Welcome back, ${
+            data.passenger?.full_name ||
+            'Passenger'
+          }!`,
+          [
+            {
+              text: 'Continue',
+
+              onPress: () => {
+
+                // PASS PASSENGER DATA TO MAIN
+
+                navigation.replace(
+                  'Main',
+                  {
+                    passenger: data.passenger,
+                  }
+                );
+
+              },
+            },
+          ]
+        );
+
+      } else {
+
+        Alert.alert(
+          'Login Failed',
+          data.message ||
+            'Invalid email or password.'
+        );
+
+      }
+
+    } catch (error) {
+
+      console.log(
+        'LOGIN ERROR:',
+        error
+      );
+
+      Alert.alert(
+        'Connection Error',
+        'Unable to connect to the server. Please make sure XAMPP Apache is running.'
+      );
+
+    } finally {
 
       setLoading(false);
 
-      navigation.replace('Main');
-
-    }, 1500);
+    }
 
   };
 
   return (
 
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={styles.container}
+    >
 
       <StatusBar
         backgroundColor={COLORS.primary}
@@ -57,21 +146,24 @@ export default function LoginScreen() {
 
         {/* LOGO */}
 
-        <View style={styles.logoContainer}>
+        <View
+          style={styles.logoContainer}
+        >
 
           <Image
-            source={require('../assets/trivora_icon.png')}
+            source={require(
+              '../assets/trivora_icon.png'
+            )}
             style={styles.logo}
           />
-
-          {/* Tinanggal na ang duplicate na TRIVORA */}
 
           <Text style={styles.title}>
             Welcome Back
           </Text>
 
           <Text style={styles.subtitle}>
-            Login to continue using the TRIVORA Passenger App.
+            Login to continue using the
+            TRIVORA Passenger App.
           </Text>
 
         </View>
@@ -80,11 +172,15 @@ export default function LoginScreen() {
 
         <View style={styles.card}>
 
+          {/* EMAIL */}
+
           <Text style={styles.label}>
             Email Address
           </Text>
 
-          <View style={styles.inputContainer}>
+          <View
+            style={styles.inputContainer}
+          >
 
             <Ionicons
               name="mail-outline"
@@ -104,11 +200,15 @@ export default function LoginScreen() {
 
           </View>
 
+          {/* PASSWORD */}
+
           <Text style={styles.label}>
             Password
           </Text>
 
-          <View style={styles.inputContainer}>
+          <View
+            style={styles.inputContainer}
+          >
 
             <Ionicons
               name="lock-closed-outline"
@@ -120,13 +220,19 @@ export default function LoginScreen() {
               placeholder="Enter your password"
               placeholderTextColor="#999"
               style={styles.input}
-              secureTextEntry={!showPassword}
+              secureTextEntry={
+                !showPassword
+              }
               value={password}
               onChangeText={setPassword}
             />
 
             <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
+              onPress={() =>
+                setShowPassword(
+                  !showPassword
+                )
+              }
             >
 
               <Ionicons
@@ -142,14 +248,19 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
           </View>
-                    {/* OPTIONS */}
 
-          <View style={styles.options}>
+          {/* OPTIONS */}
+
+          <View
+            style={styles.options}
+          >
 
             <TouchableOpacity
               style={styles.remember}
               onPress={() =>
-                setRememberMe(!rememberMe)
+                setRememberMe(
+                  !rememberMe
+                )
               }
             >
 
@@ -163,17 +274,27 @@ export default function LoginScreen() {
                 color={COLORS.primary}
               />
 
-              <Text style={styles.rememberText}>
+              <Text
+                style={
+                  styles.rememberText
+                }
+              >
                 Remember Me
               </Text>
 
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => navigation.navigate('ForgotPassword')}
+              onPress={() =>
+                navigation.navigate(
+                  'ForgotPassword'
+                )
+              }
             >
 
-              <Text style={styles.forgot}>
+              <Text
+                style={styles.forgot}
+              >
                 Forgot Password?
               </Text>
 
@@ -186,14 +307,23 @@ export default function LoginScreen() {
           <TouchableOpacity
             style={styles.loginButton}
             onPress={handleLogin}
+            disabled={loading}
           >
 
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+
+              <ActivityIndicator
+                color="#FFFFFF"
+              />
+
             ) : (
-              <Text style={styles.loginText}>
+
+              <Text
+                style={styles.loginText}
+              >
                 LOGIN
               </Text>
+
             )}
 
           </TouchableOpacity>
@@ -202,17 +332,23 @@ export default function LoginScreen() {
 
           <View style={styles.bottom}>
 
-            <Text style={styles.bottomText}>
+            <Text
+              style={styles.bottomText}
+            >
               Don't have an account?
             </Text>
 
             <TouchableOpacity
               onPress={() =>
-                navigation.navigate('Register')
+                navigation.navigate(
+                  'Register'
+                )
               }
             >
 
-              <Text style={styles.register}>
+              <Text
+                style={styles.register}
+              >
                 Create Account
               </Text>
 
@@ -234,7 +370,8 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor:
+      COLORS.background,
   },
 
   scroll: {
@@ -282,12 +419,14 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowRadius: 10,
+
     shadowOffset: {
       width: 0,
       height: 5,
     },
   },
-    label: {
+
+  label: {
     fontSize: 15,
     fontWeight: '600',
     color: COLORS.black,

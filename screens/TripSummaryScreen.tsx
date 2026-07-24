@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 
 import {
@@ -23,398 +22,433 @@ export default function TripSummaryScreen() {
 
   const route = useRoute<any>();
 
+  /*
+  ========================================
+  GET TRIP DATA
+  ========================================
+  */
+
   const {
+    destination = 'No destination',
+    distance = '0 km',
+    eta = '0 mins',
+    estimatedFare = '₱0',
+  } = route.params || {};
 
-    destination,
 
-    distance,
+  /*
+  ========================================
+  CONTINUE TO RATE DRIVER
+  ========================================
+  */
 
-    eta,
+  function continueToRating() {
 
-    estimatedFare,
+    navigation.replace(
+      'RateDriver',
+      {
+        destination,
+        distance,
+        eta,
+        estimatedFare,
+      }
+    );
 
-  } = route.params || {
+  }
 
-    destination: 'Unknown',
-
-    distance: '0 km',
-
-    eta: '0 mins',
-
-    estimatedFare: '₱0',
-
-  };
 
   return (
 
     <View style={styles.container}>
 
-      {/* HEADER */}
+
+      {/* BACK BUTTON */}
+
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() =>
+          navigation.goBack()
+        }
+      >
+
+        <Ionicons
+          name="arrow-back"
+          size={26}
+          color={COLORS.black}
+        />
+
+      </TouchableOpacity>
+
+
+      {/* TITLE */}
 
       <View style={styles.header}>
 
-        <TouchableOpacity
-
-          style={styles.backButton}
-
-          onPress={() => navigation.goBack()}
-
-        >
+        <View style={styles.successIcon}>
 
           <Ionicons
-
-            name="arrow-back"
-
-            size={24}
-
+            name="checkmark"
+            size={35}
             color="#FFFFFF"
-
           />
 
-        </TouchableOpacity>
+        </View>
 
-        <Text style={styles.headerTitle}>
+        <Text style={styles.title}>
+          Trip Completed
+        </Text>
 
-          Trip Summary
-
+        <Text style={styles.subtitle}>
+          Thank you for riding with Trivora
         </Text>
 
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-      >
 
-        {/* SUCCESS CARD */}
+      {/* TRIP SUMMARY CARD */}
 
-        <View style={styles.successCard}>
+      <View style={styles.card}>
 
-          <Ionicons
-            name="checkmark-circle"
-            size={80}
-            color="#22C55E"
-          />
 
-          <Text style={styles.successTitle}>
-            Trip Completed
-          </Text>
+        {/* DESTINATION */}
 
-          <Text style={styles.successSubtitle}>
-            Thank you for riding with TRIVORA.
-          </Text>
+        <View style={styles.row}>
 
-        </View>
+          <View style={styles.labelContainer}>
 
-        {/* TRIP DETAILS */}
-
-        <View style={styles.summaryCard}>
-                    <Text style={styles.cardTitle}>
-            Trip Information
-          </Text>
-
-          <View style={styles.row}>
+            <Ionicons
+              name="location"
+              size={20}
+              color={COLORS.primary}
+            />
 
             <Text style={styles.label}>
               Destination
             </Text>
 
-            <Text style={styles.value}>
-              {destination}
-            </Text>
-
           </View>
 
-          <View style={styles.row}>
+          <Text
+            style={styles.value}
+            numberOfLines={3}
+          >
+            {destination}
+          </Text>
+
+        </View>
+
+
+        <View style={styles.divider} />
+
+
+        {/* DISTANCE */}
+
+        <View style={styles.row}>
+
+          <View style={styles.labelContainer}>
+
+            <Ionicons
+              name="navigate"
+              size={20}
+              color={COLORS.primary}
+            />
 
             <Text style={styles.label}>
-              Total Distance
-            </Text>
-
-            <Text style={styles.value}>
-              {distance}
+              Distance
             </Text>
 
           </View>
 
-          <View style={styles.row}>
+          <Text style={styles.value}>
+            {distance}
+          </Text>
+
+        </View>
+
+
+        <View style={styles.divider} />
+
+
+        {/* TRAVEL TIME */}
+
+        <View style={styles.row}>
+
+          <View style={styles.labelContainer}>
+
+            <Ionicons
+              name="time"
+              size={20}
+              color={COLORS.primary}
+            />
 
             <Text style={styles.label}>
               Travel Time
             </Text>
 
-            <Text style={styles.value}>
-              {eta}
-            </Text>
-
           </View>
 
-          <View style={styles.row}>
-
-            <Text style={styles.label}>
-              Total Fare
-            </Text>
-
-            <Text style={styles.fare}>
-              {estimatedFare}
-            </Text>
-
-          </View>
+          <Text style={styles.value}>
+            {eta}
+          </Text>
 
         </View>
 
-        {/* DRIVER INFORMATION */}
 
-        <View style={styles.driverCard}>
+        <View style={styles.divider} />
 
-          <Text style={styles.cardTitle}>
-            Driver Information
-          </Text>
 
-          <View style={styles.driverRow}>
+        {/* FARE */}
+
+        <View style={styles.row}>
+
+          <View style={styles.labelContainer}>
 
             <Ionicons
-              name="person-circle"
-              size={70}
+              name="cash"
+              size={20}
               color={COLORS.primary}
             />
 
-            <View style={styles.driverInfo}>
-
-              <Text style={styles.driverName}>
-                Juan Dela Cruz
-              </Text>
-
-              <Text style={styles.driverPlate}>
-                Tricycle No. TRV-102
-              </Text>
-
-              <Text style={styles.driverRating}>
-                ⭐ 4.9 Rating
-              </Text>
-
-            </View>
+            <Text style={styles.label}>
+              Fare
+            </Text>
 
           </View>
 
+          <Text style={styles.fareValue}>
+            {estimatedFare}
+          </Text>
+
         </View>
-                {/* RATE DRIVER */}
 
-        <TouchableOpacity
-          style={styles.rateButton}
-          onPress={() =>
-            navigation.navigate('RateDriver', {
-              destination,
-              distance,
-              eta,
-              estimatedFare,
-            })
-          }
-        >
+      </View>
 
-          <Ionicons
-            name="star"
-            size={22}
-            color="#FFFFFF"
-          />
 
-          <Text style={styles.rateButtonText}>
-            Rate Driver
-          </Text>
+      {/* CONTINUE BUTTON */}
 
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={
+          continueToRating
+        }
+      >
 
-        {/* BACK TO DASHBOARD */}
+        <Text style={styles.buttonText}>
+          Continue
+        </Text>
 
-        <TouchableOpacity
-          style={styles.homeButton}
-          onPress={() => navigation.navigate('Main')}
-        >
+        <Ionicons
+          name="arrow-forward"
+          size={22}
+          color="#FFFFFF"
+        />
 
-          <Ionicons
-            name="home"
-            size={22}
-            color={COLORS.primary}
-          />
+      </TouchableOpacity>
 
-          <Text style={styles.homeButtonText}>
-            Back to Dashboard
-          </Text>
-
-        </TouchableOpacity>
-
-      </ScrollView>
 
     </View>
 
   );
 
 }
+
+
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: '#F5F8FF',
-    paddingTop: 50,
+
+    backgroundColor: '#F5F7FB',
+
+    justifyContent: 'center',
+
     paddingHorizontal: 20,
   },
 
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
 
   backButton: {
+    position: 'absolute',
+
+    top: 55,
+    left: 20,
+
     width: 45,
     height: 45,
-    borderRadius: 25,
-    backgroundColor: COLORS.primary,
+
+    borderRadius: 23,
+
+    backgroundColor: '#FFFFFF',
+
     justifyContent: 'center',
     alignItems: 'center',
+
     elevation: 5,
+
+    shadowColor: '#000000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+
+    zIndex: 10,
   },
 
-  headerTitle: {
-    marginLeft: 15,
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
 
-  successCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 25,
+  header: {
     alignItems: 'center',
-    elevation: 5,
-    marginBottom: 20,
-  },
 
-  successTitle: {
-    marginTop: 15,
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#22C55E',
-  },
-
-  successSubtitle: {
-    marginTop: 8,
-    fontSize: 15,
-    color: COLORS.gray,
-    textAlign: 'center',
-  },
-
-  summaryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    elevation: 5,
-    marginBottom: 20,
-  },
-
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 15,
-  },
-
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-
-  label: {
-    fontSize: 16,
-    color: COLORS.gray,
-  },
-
-  value: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.black,
-  },
-
-  fare: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-
-  driverCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    elevation: 5,
     marginBottom: 25,
   },
 
-  driverRow: {
-    flexDirection: 'row',
+
+  successIcon: {
+    width: 65,
+    height: 65,
+
+    borderRadius: 33,
+
+    backgroundColor: COLORS.primary,
+
+    justifyContent: 'center',
     alignItems: 'center',
+
+    marginBottom: 12,
   },
 
-  driverInfo: {
-    marginLeft: 15,
+
+  title: {
+    fontSize: 28,
+
+    fontWeight: 'bold',
+
+    color: COLORS.primary,
+
+    textAlign: 'center',
+
+    marginBottom: 8,
+  },
+
+
+  subtitle: {
+    fontSize: 15,
+
+    color: '#777777',
+
+    textAlign: 'center',
+  },
+
+
+  card: {
+    backgroundColor: '#FFFFFF',
+
+    borderRadius: 20,
+
+    padding: 20,
+
+    elevation: 6,
+
+    shadowColor: '#000000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+  },
+
+
+  row: {
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
+
+    alignItems: 'center',
+
+    minHeight: 50,
+  },
+
+
+  labelContainer: {
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
     flex: 1,
   },
 
-  driverName: {
-    fontSize: 18,
+
+  label: {
+    fontSize: 15,
+
+    color: '#666666',
+
+    marginLeft: 8,
+  },
+
+
+  value: {
+    fontSize: 15,
+
     fontWeight: 'bold',
+
     color: COLORS.black,
+
+    textAlign: 'right',
+
+    flex: 1.5,
   },
 
-  driverPlate: {
-    marginTop: 5,
-    fontSize: 15,
-    color: COLORS.gray,
-  },
 
-  driverRating: {
-    marginTop: 5,
-    fontSize: 15,
-    color: '#F4B400',
-    fontWeight: '600',
-  },
+  fareValue: {
+    fontSize: 21,
 
-  rateButton: {
-    height: 55,
-    backgroundColor: COLORS.primary,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    elevation: 5,
-    marginBottom: 15,
-  },
-
-  rateButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
     fontWeight: 'bold',
-    marginLeft: 8,
-  },
 
-  homeButton: {
-    height: 55,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 30,
-  },
-
-  homeButtonText: {
     color: COLORS.primary,
-    fontSize: 17,
+
+    textAlign: 'right',
+  },
+
+
+  divider: {
+    height: 1,
+
+    backgroundColor: '#EEEEEE',
+
+    marginVertical: 5,
+  },
+
+
+  button: {
+    marginTop: 30,
+
+    height: 58,
+
+    borderRadius: 15,
+
+    backgroundColor: COLORS.primary,
+
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    flexDirection: 'row',
+
+    elevation: 5,
+  },
+
+
+  buttonText: {
+    color: '#FFFFFF',
+
+    fontSize: 18,
+
     fontWeight: 'bold',
-    marginLeft: 8,
+
+    marginRight: 10,
   },
 
 });

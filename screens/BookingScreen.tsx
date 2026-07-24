@@ -18,9 +18,7 @@ import {
 import COLORS from '../theme/colors';
 
 export default function BookingScreen() {
-
   const navigation = useNavigation<any>();
-
   const route = useRoute<any>();
 
   const {
@@ -36,10 +34,9 @@ export default function BookingScreen() {
   };
 
   return (
-
     <View style={styles.container}>
 
-      {/* HEADER */}
+      {/* Header */}
 
       <View style={styles.header}>
 
@@ -47,13 +44,11 @@ export default function BookingScreen() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-
           <Ionicons
             name="arrow-back"
             size={24}
             color="#FFFFFF"
           />
-
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>
@@ -66,14 +61,13 @@ export default function BookingScreen() {
         showsVerticalScrollIndicator={false}
       >
 
-        {/* DRIVER CARD */}
+        {/* Driver Card */}
 
         <View style={styles.driverCard}>
 
           <Image
             source={{
-              uri:
-                'https://i.pravatar.cc/300?img=12',
+              uri: 'https://i.pravatar.cc/300?img=12',
             }}
             style={styles.avatar}
           />
@@ -88,10 +82,9 @@ export default function BookingScreen() {
 
           <View style={styles.infoRow}>
 
-            <Ionicons
-              name="car"
-              size={22}
-              color={COLORS.primary}
+            <Image
+              source={require('../assets/tricycle.png')}
+              style={styles.tricycleIcon}
             />
 
             <Text style={styles.infoText}>
@@ -115,12 +108,11 @@ export default function BookingScreen() {
           </View>
 
         </View>
-
-        {/* TRIP DETAILS */}
+                {/* Trip Details */}
 
         <View style={styles.tripCard}>
 
-                      <Text style={styles.cardTitle}>
+          <Text style={styles.cardTitle}>
             Trip Details
           </Text>
 
@@ -174,7 +166,7 @@ export default function BookingScreen() {
 
         </View>
 
-        {/* DRIVER ACTIONS */}
+        {/* Driver Actions */}
 
         <View style={styles.actionContainer}>
 
@@ -223,7 +215,7 @@ export default function BookingScreen() {
           </TouchableOpacity>
 
         </View>
-                {/* CONFIRM BOOKING */}
+                {/* Confirm Booking */}
 
         <TouchableOpacity
           style={styles.confirmButton}
@@ -237,10 +229,9 @@ export default function BookingScreen() {
           }
         >
 
-          <Ionicons
-            name="checkmark-circle"
-            size={22}
-            color="#FFFFFF"
+          <Image
+            source={require('../assets/tricycle.png')}
+            style={styles.confirmIcon}
           />
 
           <Text style={styles.confirmButtonText}>
@@ -249,12 +240,11 @@ export default function BookingScreen() {
 
         </TouchableOpacity>
 
-        {/* CANCEL BOOKING */}
+        {/* Cancel Booking */}
 
         <TouchableOpacity
           style={styles.cancelButton}
           onPress={() =>
-
             Alert.alert(
               'Cancel Booking',
               'Are you sure you want to cancel this booking?',
@@ -270,7 +260,6 @@ export default function BookingScreen() {
                 },
               ]
             )
-
           }
         >
 
@@ -291,10 +280,8 @@ export default function BookingScreen() {
     </View>
 
   );
-
 }
-const styles = StyleSheet.create({
-
+  const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F8FF',
@@ -311,7 +298,7 @@ const styles = StyleSheet.create({
   backButton: {
     width: 45,
     height: 45,
-    borderRadius: 23,
+    borderRadius: 22.5,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -362,10 +349,16 @@ const styles = StyleSheet.create({
   },
 
   infoText: {
+    flex: 1,
     marginLeft: 12,
     fontSize: 16,
     color: COLORS.black,
-    flex: 1,
+  },
+
+  tricycleIcon: {
+    width: 34,
+    height: 34,
+    resizeMode: 'contain',
   },
 
   tripCard: {
@@ -448,11 +441,18 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
+  confirmIcon: {
+    width: 28,
+    height: 28,
+    resizeMode: 'contain',
+    marginRight: 10,
+    color: '#FFFFFF',
+  },
+
   confirmButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 10,
   },
 
   cancelButton: {
@@ -473,5 +473,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
   },
-
 });

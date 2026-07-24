@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView,
   View,
@@ -10,47 +9,214 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+
+import {
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
 export default function ProfileScreen() {
+
   const navigation = useNavigation<any>();
 
-  const [name, setName] = useState('Eman Esguerra');
-  const [email] = useState('emanc6620@gmail.com');
-  const [phone, setPhone] = useState('09678216267');
-  const [address, setAddress] = useState('Nasugbu, Batangas');
-  const [emergency, setEmergency] = useState('09123456789');
+  const route = useRoute<any>();
 
-  const handleSave = () => {
-    Alert.alert(
-      'Success',
-      'Profile updated successfully.'
-    );
+  // GET LOGGED-IN PASSENGER DATA
+
+  const passenger = route.params?.passenger;
+
+  // PROFILE STATES
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const [loading, setLoading] = useState(false);
+
+  // LOAD PASSENGER DATA
+
+  useEffect(() => {
+
+    if (passenger) {
+
+      setName(
+        passenger.full_name || ''
+      );
+
+      setEmail(
+        passenger.email || ''
+      );
+
+      setPhone(
+        passenger.phone || ''
+      );
+
+    }
+
+  }, [passenger]);
+
+  // SAVE PROFILE
+
+  const handleSave = async () => {
+
+    // CHECK PASSENGER ID
+
+    if (!passenger?.id) {
+
+      Alert.alert(
+        'Error',
+        'Passenger information not found. Please login again.'
+      );
+
+      return;
+    }
+
+    // CHECK EMPTY FIELDS
+
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim()
+    ) {
+
+      Alert.alert(
+        'Incomplete Information',
+        'Please fill in all fields.'
+      );
+
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+
+      const response = await fetch(
+        'http://192.168.8.33/passenger_api/update_profile.php',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+
+            id: passenger.id,
+
+            full_name:
+              name.trim(),
+
+            email:
+              email.trim(),
+
+            phone:
+              phone.trim(),
+
+          }),
+        }
+      );
+
+      const data =
+        await response.json();
+
+      console.log(
+        'UPDATE PROFILE RESPONSE:',
+        data
+      );
+
+      if (data.success) {
+
+        // UPDATE LOCAL PASSENGER DATA
+
+        passenger.full_name =
+          name.trim();
+
+        passenger.email =
+          email.trim();
+
+        passenger.phone =
+          phone.trim();
+
+        Alert.alert(
+          'Success',
+          data.message ||
+            'Profile updated successfully.'
+        );
+
+      } else {
+
+        Alert.alert(
+          'Update Failed',
+          data.message ||
+            'Unable to update profile.'
+        );
+
+      }
+
+    } catch (error) {
+
+      console.log(
+        'UPDATE PROFILE ERROR:',
+        error
+      );
+
+      Alert.alert(
+        'Connection Error',
+        'Unable to connect to the server. Please make sure XAMPP Apache is running.'
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
   };
 
+  // LOGOUT
+
   const handleLogout = () => {
+
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
       [
+
         {
           text: 'Cancel',
           style: 'cancel',
         },
+
         {
           text: 'Logout',
           style: 'destructive',
-          onPress: () => navigation.replace('Login'),
+
+          onPress: () => {
+
+            navigation.replace(
+              'Login'
+            );
+
+          },
+
         },
+
       ]
     );
+
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+
+    <SafeAreaView
+      style={styles.container}
+    >
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -58,18 +224,27 @@ export default function ProfileScreen() {
 
         {/* HEADER */}
 
-        <View style={styles.header}>
+        <View
+          style={styles.header}
+        >
 
-          <View style={styles.avatarContainer}>
+          <View
+            style={styles.avatarContainer}
+          >
 
             <Image
               source={{
-                uri: 'https://i.pravatar.cc/300',
+                uri:
+                  'https://i.pravatar.cc/300',
               }}
               style={styles.avatar}
             />
 
-            <TouchableOpacity style={styles.cameraButton}>
+            <TouchableOpacity
+              style={
+                styles.cameraButton
+              }
+            >
 
               <Ionicons
                 name="camera"
@@ -81,21 +256,37 @@ export default function ProfileScreen() {
 
           </View>
 
-          <Text style={styles.name}>
-            {name}
+          <Text
+            style={styles.name}
+          >
+
+            {name ||
+              'Passenger'}
+
           </Text>
 
-          <Text style={styles.email}>
-            {email}
+          <Text
+            style={styles.email}
+          >
+
+            {email ||
+              'Passenger Account'}
+
           </Text>
 
         </View>
 
         {/* PROFILE CARD */}
 
-        <View style={styles.card}>
+        <View
+          style={styles.card}
+        >
 
-          <Text style={styles.label}>
+          {/* FULL NAME */}
+
+          <Text
+            style={styles.label}
+          >
             Full Name
           </Text>
 
@@ -103,19 +294,33 @@ export default function ProfileScreen() {
             style={styles.input}
             value={name}
             onChangeText={setName}
+            placeholder="Enter your full name"
+            placeholderTextColor="#999"
           />
 
-          <Text style={styles.label}>
+          {/* EMAIL */}
+
+          <Text
+            style={styles.label}
+          >
             Email
           </Text>
 
           <TextInput
             style={styles.input}
             value={email}
-            editable={false}
+            onChangeText={setEmail}
+            placeholder="Enter your email"
+            placeholderTextColor="#999"
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
 
-          <Text style={styles.label}>
+          {/* MOBILE NUMBER */}
+
+          <Text
+            style={styles.label}
+          >
             Mobile Number
           </Text>
 
@@ -123,55 +328,64 @@ export default function ProfileScreen() {
             style={styles.input}
             value={phone}
             onChangeText={setPhone}
-            keyboardType="phone-pad"
-          />
-
-          <Text style={styles.label}>
-            Address
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            value={address}
-            onChangeText={setAddress}
-          />
-
-          <Text style={styles.label}>
-            Emergency Contact
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            value={emergency}
-            onChangeText={setEmergency}
+            placeholder="Enter your mobile number"
+            placeholderTextColor="#999"
             keyboardType="phone-pad"
           />
 
         </View>
-                {/* SAVE CHANGES */}
+
+        {/* SAVE CHANGES */}
 
         <TouchableOpacity
           style={styles.button}
           onPress={handleSave}
+          disabled={loading}
         >
 
-          <Ionicons
-            name="save"
-            size={22}
-            color="#fff"
-          />
+          {loading ? (
 
-          <Text style={styles.buttonText}>
-            Save Changes
-          </Text>
+            <ActivityIndicator
+              color="#fff"
+            />
+
+          ) : (
+
+            <>
+
+              <Ionicons
+                name="save"
+                size={22}
+                color="#fff"
+              />
+
+              <Text
+                style={styles.buttonText}
+              >
+                Save Changes
+              </Text>
+
+            </>
+
+          )}
 
         </TouchableOpacity>
 
         {/* CHANGE PASSWORD */}
 
         <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('ChangePassword')}
+          style={
+            styles.secondaryButton
+          }
+          onPress={() =>
+            navigation.navigate(
+              'ChangePassword',
+              {
+                passenger:
+                  passenger,
+              }
+            )
+          }
         >
 
           <Ionicons
@@ -180,7 +394,11 @@ export default function ProfileScreen() {
             color={COLORS.primary}
           />
 
-          <Text style={styles.secondaryButtonText}>
+          <Text
+            style={
+              styles.secondaryButtonText
+            }
+          >
             Change Password
           </Text>
 
@@ -189,8 +407,14 @@ export default function ProfileScreen() {
         {/* RIDE HISTORY */}
 
         <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('History')}
+          style={
+            styles.secondaryButton
+          }
+          onPress={() =>
+            navigation.navigate(
+              'History'
+            )
+          }
         >
 
           <Ionicons
@@ -199,7 +423,11 @@ export default function ProfileScreen() {
             color={COLORS.primary}
           />
 
-          <Text style={styles.secondaryButtonText}>
+          <Text
+            style={
+              styles.secondaryButtonText
+            }
+          >
             Ride History
           </Text>
 
@@ -208,7 +436,9 @@ export default function ProfileScreen() {
         {/* LOGOUT */}
 
         <TouchableOpacity
-          style={styles.logoutButton}
+          style={
+            styles.logoutButton
+          }
           onPress={handleLogout}
         >
 
@@ -218,7 +448,9 @@ export default function ProfileScreen() {
             color="#fff"
           />
 
-          <Text style={styles.buttonText}>
+          <Text
+            style={styles.buttonText}
+          >
             Logout
           </Text>
 
@@ -227,8 +459,11 @@ export default function ProfileScreen() {
       </ScrollView>
 
     </SafeAreaView>
+
   );
+
 }
+
 const styles = StyleSheet.create({
 
   container: {
@@ -237,11 +472,17 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    backgroundColor: COLORS.primary,
+    backgroundColor:
+      COLORS.primary,
+
     alignItems: 'center',
+
     paddingTop: 40,
+
     paddingBottom: 35,
+
     borderBottomLeftRadius: 30,
+
     borderBottomRightRadius: 30,
   },
 
@@ -251,117 +492,189 @@ const styles = StyleSheet.create({
 
   avatar: {
     width: 120,
+
     height: 120,
+
     borderRadius: 60,
+
     borderWidth: 4,
+
     borderColor: '#fff',
   },
 
   cameraButton: {
     position: 'absolute',
+
     bottom: 0,
+
     right: 0,
+
     width: 38,
+
     height: 38,
+
     borderRadius: 19,
-    backgroundColor: COLORS.primary,
+
+    backgroundColor:
+      COLORS.primary,
+
     justifyContent: 'center',
+
     alignItems: 'center',
+
     borderWidth: 2,
+
     borderColor: '#fff',
   },
 
   name: {
     color: '#fff',
+
     fontSize: 24,
+
     fontWeight: 'bold',
+
     marginTop: 15,
   },
 
   email: {
     color: '#E5E7EB',
+
     fontSize: 15,
+
     marginTop: 5,
   },
 
   card: {
     backgroundColor: '#fff',
+
     marginHorizontal: 20,
+
     marginTop: 25,
+
     borderRadius: 20,
+
     padding: 20,
+
     elevation: 5,
   },
 
   label: {
     fontSize: 15,
+
     fontWeight: '600',
+
     color: COLORS.black,
+
     marginBottom: 8,
+
     marginTop: 15,
   },
 
   input: {
     height: 50,
+
     borderWidth: 1,
+
     borderColor: '#D9D9D9',
+
     borderRadius: 12,
+
     paddingHorizontal: 15,
+
     fontSize: 16,
+
     backgroundColor: '#F9FAFB',
+
     color: COLORS.black,
   },
 
   button: {
     marginHorizontal: 20,
+
     marginTop: 20,
+
     height: 55,
+
     borderRadius: 15,
-    backgroundColor: COLORS.primary,
+
+    backgroundColor:
+      COLORS.primary,
+
     flexDirection: 'row',
+
     justifyContent: 'center',
+
     alignItems: 'center',
+
     elevation: 5,
   },
 
   secondaryButton: {
     marginHorizontal: 20,
+
     marginTop: 15,
+
     height: 55,
+
     borderRadius: 15,
+
     backgroundColor: '#fff',
+
     borderWidth: 1,
-    borderColor: COLORS.primary,
+
+    borderColor:
+      COLORS.primary,
+
     flexDirection: 'row',
+
     justifyContent: 'center',
+
     alignItems: 'center',
+
     elevation: 2,
   },
 
   logoutButton: {
     marginHorizontal: 20,
+
     marginTop: 15,
+
     marginBottom: 40,
+
     height: 55,
+
     borderRadius: 15,
+
     backgroundColor: '#EF4444',
+
     flexDirection: 'row',
+
     justifyContent: 'center',
+
     alignItems: 'center',
+
     elevation: 5,
   },
 
   buttonText: {
     color: '#fff',
+
     fontSize: 17,
+
     fontWeight: 'bold',
+
     marginLeft: 8,
   },
 
   secondaryButtonText: {
-    color: COLORS.primary,
+    color:
+      COLORS.primary,
+
     fontSize: 17,
+
     fontWeight: 'bold',
+
     marginLeft: 8,
   },
 
