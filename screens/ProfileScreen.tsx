@@ -18,6 +18,7 @@ import COLORS from '../theme/colors';
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
 
+  const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('Eman Esguerra');
   const [email] = useState('emanc6620@gmail.com');
   const [phone, setPhone] = useState('09678216267');
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
   const [emergency, setEmergency] = useState('09123456789');
 
   const handleSave = () => {
+    setIsEditing(false);
     Alert.alert(
       'Success',
       'Profile updated successfully.'
@@ -95,14 +97,22 @@ export default function ProfileScreen() {
 
         <View style={styles.card}>
 
+          <View style={styles.cardHeader}>
+            <Text style={styles.sectionTitle}>Profile Details</Text>
+            <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
+              <Ionicons name={isEditing ? "close" : "pencil"} size={22} color={COLORS.primary} />
+            </TouchableOpacity>
+          </View>
+
           <Text style={styles.label}>
             Full Name
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, !isEditing && styles.inputDisabled]}
             value={name}
             onChangeText={setName}
+            editable={isEditing}
           />
 
           <Text style={styles.label}>
@@ -110,7 +120,7 @@ export default function ProfileScreen() {
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, styles.inputDisabled]}
             value={email}
             editable={false}
           />
@@ -120,10 +130,11 @@ export default function ProfileScreen() {
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, !isEditing && styles.inputDisabled]}
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
+            editable={isEditing}
           />
 
           <Text style={styles.label}>
@@ -131,9 +142,10 @@ export default function ProfileScreen() {
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, !isEditing && styles.inputDisabled]}
             value={address}
             onChangeText={setAddress}
+            editable={isEditing}
           />
 
           <Text style={styles.label}>
@@ -141,31 +153,34 @@ export default function ProfileScreen() {
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, !isEditing && styles.inputDisabled]}
             value={emergency}
             onChangeText={setEmergency}
             keyboardType="phone-pad"
+            editable={isEditing}
           />
 
         </View>
-                {/* SAVE CHANGES */}
+        {/* SAVE CHANGES */}
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSave}
-        >
+        {isEditing && (
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleSave}
+          >
 
-          <Ionicons
-            name="save"
-            size={22}
-            color="#fff"
-          />
+            <Ionicons
+              name="save"
+              size={22}
+              color="#fff"
+            />
 
-          <Text style={styles.buttonText}>
-            Save Changes
-          </Text>
+            <Text style={styles.buttonText}>
+              Save Changes
+            </Text>
 
-        </TouchableOpacity>
+          </TouchableOpacity>
+        )}
 
         {/* CHANGE PASSWORD */}
 
@@ -182,25 +197,6 @@ export default function ProfileScreen() {
 
           <Text style={styles.secondaryButtonText}>
             Change Password
-          </Text>
-
-        </TouchableOpacity>
-
-        {/* RIDE HISTORY */}
-
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('History')}
-        >
-
-          <Ionicons
-            name="time"
-            size={22}
-            color={COLORS.primary}
-          />
-
-          <Text style={styles.secondaryButtonText}>
-            Ride History
           </Text>
 
         </TouchableOpacity>
@@ -293,6 +289,19 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.black,
+  },
+
   label: {
     fontSize: 15,
     fontWeight: '600',
@@ -310,6 +319,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#F9FAFB',
     color: COLORS.black,
+  },
+
+  inputDisabled: {
+    backgroundColor: '#E5E7EB',
+    color: '#6B7280',
+    borderColor: '#E5E7EB',
   },
 
   button: {
@@ -344,7 +359,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     height: 55,
     borderRadius: 15,
-    backgroundColor: '#EF4444',
+    backgroundColor: '#E63946',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
