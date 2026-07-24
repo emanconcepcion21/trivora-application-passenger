@@ -31,9 +31,19 @@ export default function ProfileScreen() {
   } = usePassenger();
 
   // PROFILE STATES
+  const [isEditing, setIsEditing] = useState(false);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+
+  const [address, setAddress] = useState(
+    'Nasugbu, Batangas'
+  );
+
+  const [emergency, setEmergency] = useState(
+    '09123456789'
+  );
 
   const [loading, setLoading] = useState(false);
 
@@ -125,6 +135,8 @@ export default function ProfileScreen() {
       );
 
       if (data.success) {
+
+        setIsEditing(false);
 
         Alert.alert(
           'Success',
@@ -269,6 +281,44 @@ export default function ProfileScreen() {
           style={styles.card}
         >
 
+          {/* PROFILE DETAILS HEADER */}
+
+          <View
+            style={styles.cardHeader}
+          >
+
+            <Text
+              style={
+                styles.sectionTitle
+              }
+            >
+              Profile Details
+            </Text>
+
+            <TouchableOpacity
+              onPress={() =>
+                setIsEditing(
+                  !isEditing
+                )
+              }
+            >
+
+              <Ionicons
+                name={
+                  isEditing
+                    ? 'close'
+                    : 'pencil'
+                }
+                size={22}
+                color={
+                  COLORS.primary
+                }
+              />
+
+            </TouchableOpacity>
+
+          </View>
+
           {/* FULL NAME */}
 
           <Text
@@ -278,13 +328,20 @@ export default function ProfileScreen() {
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              !isEditing &&
+                styles.inputDisabled,
+            ]}
             value={name}
             onChangeText={
               setName
             }
             placeholder="Enter your full name"
             placeholderTextColor="#999"
+            editable={
+              isEditing
+            }
           />
 
           {/* EMAIL */}
@@ -296,7 +353,10 @@ export default function ProfileScreen() {
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              styles.inputDisabled,
+            ]}
             value={email}
             onChangeText={
               setEmail
@@ -305,6 +365,7 @@ export default function ProfileScreen() {
             placeholderTextColor="#999"
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={false}
           />
 
           {/* MOBILE NUMBER */}
@@ -316,7 +377,11 @@ export default function ProfileScreen() {
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              !isEditing &&
+                styles.inputDisabled,
+            ]}
             value={phone}
             onChangeText={
               setPhone
@@ -324,49 +389,105 @@ export default function ProfileScreen() {
             placeholder="Enter your mobile number"
             placeholderTextColor="#999"
             keyboardType="phone-pad"
+            editable={
+              isEditing
+            }
+          />
+
+          {/* ADDRESS */}
+
+          <Text
+            style={styles.label}
+          >
+            Address
+          </Text>
+
+          <TextInput
+            style={[
+              styles.input,
+              !isEditing &&
+                styles.inputDisabled,
+            ]}
+            value={address}
+            onChangeText={
+              setAddress
+            }
+            editable={
+              isEditing
+            }
+          />
+
+          {/* EMERGENCY CONTACT */}
+
+          <Text
+            style={styles.label}
+          >
+            Emergency Contact
+          </Text>
+
+          <TextInput
+            style={[
+              styles.input,
+              !isEditing &&
+                styles.inputDisabled,
+            ]}
+            value={emergency}
+            onChangeText={
+              setEmergency
+            }
+            keyboardType="phone-pad"
+            editable={
+              isEditing
+            }
           />
 
         </View>
 
         {/* SAVE CHANGES */}
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={
-            handleSave
-          }
-          disabled={loading}
-        >
+        {isEditing && (
 
-          {loading ? (
+          <TouchableOpacity
+            style={styles.button}
+            onPress={
+              handleSave
+            }
+            disabled={
+              loading
+            }
+          >
 
-            <ActivityIndicator
-              color="#fff"
-            />
+            {loading ? (
 
-          ) : (
-
-            <>
-
-              <Ionicons
-                name="save"
-                size={22}
+              <ActivityIndicator
                 color="#fff"
               />
 
-              <Text
-                style={
-                  styles.buttonText
-                }
-              >
-                Save Changes
-              </Text>
+            ) : (
 
-            </>
+              <>
 
-          )}
+                <Ionicons
+                  name="save"
+                  size={22}
+                  color="#fff"
+                />
 
-        </TouchableOpacity>
+                <Text
+                  style={
+                    styles.buttonText
+                  }
+                >
+                  Save Changes
+                </Text>
+
+              </>
+
+            )}
+
+          </TouchableOpacity>
+
+        )}
 
         {/* CHANGE PASSWORD */}
 
@@ -530,6 +651,19 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.black,
+  },
+
   label: {
     fontSize: 15,
     fontWeight: '600',
@@ -547,6 +681,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#F9FAFB',
     color: COLORS.black,
+  },
+
+  inputDisabled: {
+    backgroundColor: '#E5E7EB',
+    color: '#6B7280',
+    borderColor: '#E5E7EB',
   },
 
   button: {

@@ -12,7 +12,6 @@ import LocationCard from '../components/LocationCard';
 import SearchCard from '../components/SearchCard';
 import MapPreview from '../components/MapPreview';
 import BookRideButton from '../components/BookRideButton';
-import QuickServices from '../components/QuickServices';
 import RecentTripCard from '../components/RecentTripCard';
 
 export default function HomeScreen() {
@@ -31,8 +30,6 @@ export default function HomeScreen() {
         <MapPreview />
 
         <BookRideButton />
-
-        <QuickServices />
 
         <RecentTripCard />
       </ScrollView>
