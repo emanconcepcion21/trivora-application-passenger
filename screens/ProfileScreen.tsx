@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+
 import {
   SafeAreaView,
   View,
@@ -12,26 +13,24 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import {
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
-
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+
 import COLORS from '../theme/colors';
+
+import { usePassenger } from '../context/PassengerContext';
 
 export default function ProfileScreen() {
 
   const navigation = useNavigation<any>();
 
-  const route = useRoute<any>();
-
-  // GET LOGGED-IN PASSENGER DATA
-
-  const passenger = route.params?.passenger;
+  // GET CURRENT LOGGED-IN PASSENGER
+  const {
+    passenger,
+    logoutPassenger,
+  } = usePassenger();
 
   // PROFILE STATES
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -39,7 +38,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
 
   // LOAD PASSENGER DATA
-
+  // WHEN PROFILE SCREEN OPENS
   useEffect(() => {
 
     if (passenger) {
@@ -61,22 +60,7 @@ export default function ProfileScreen() {
   }, [passenger]);
 
   // SAVE PROFILE
-
   const handleSave = async () => {
-
-    // CHECK PASSENGER ID
-
-    if (!passenger?.id) {
-
-      Alert.alert(
-        'Error',
-        'Passenger information not found. Please login again.'
-      );
-
-      return;
-    }
-
-    // CHECK EMPTY FIELDS
 
     if (
       !name.trim() ||
@@ -87,6 +71,16 @@ export default function ProfileScreen() {
       Alert.alert(
         'Incomplete Information',
         'Please fill in all fields.'
+      );
+
+      return;
+    }
+
+    if (!passenger?.id) {
+
+      Alert.alert(
+        'Error',
+        'Passenger information is not available.'
       );
 
       return;
@@ -132,17 +126,6 @@ export default function ProfileScreen() {
 
       if (data.success) {
 
-        // UPDATE LOCAL PASSENGER DATA
-
-        passenger.full_name =
-          name.trim();
-
-        passenger.email =
-          email.trim();
-
-        passenger.phone =
-          phone.trim();
-
         Alert.alert(
           'Success',
           data.message ||
@@ -180,14 +163,13 @@ export default function ProfileScreen() {
   };
 
   // LOGOUT
-
   const handleLogout = () => {
 
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
-      [
 
+      [
         {
           text: 'Cancel',
           style: 'cancel',
@@ -199,14 +181,16 @@ export default function ProfileScreen() {
 
           onPress: () => {
 
+            // CLEAR CURRENT PASSENGER
+            logoutPassenger();
+
+            // RETURN TO LOGIN
             navigation.replace(
               'Login'
             );
 
           },
-
         },
-
       ]
     );
 
@@ -229,16 +213,23 @@ export default function ProfileScreen() {
         >
 
           <View
-            style={styles.avatarContainer}
+            style={
+              styles.avatarContainer
+            }
           >
 
             <Image
               source={{
                 uri:
+                  passenger?.profile_image ||
                   'https://i.pravatar.cc/300',
               }}
               style={styles.avatar}
             />
+
+            {/* CAMERA ICON
+                DESIGN ONLY
+                NO CAMERA / GALLERY FUNCTIONALITY */}
 
             <TouchableOpacity
               style={
@@ -259,19 +250,15 @@ export default function ProfileScreen() {
           <Text
             style={styles.name}
           >
-
             {name ||
               'Passenger'}
-
           </Text>
 
           <Text
             style={styles.email}
           >
-
             {email ||
-              'Passenger Account'}
-
+              'No email available'}
           </Text>
 
         </View>
@@ -293,7 +280,9 @@ export default function ProfileScreen() {
           <TextInput
             style={styles.input}
             value={name}
-            onChangeText={setName}
+            onChangeText={
+              setName
+            }
             placeholder="Enter your full name"
             placeholderTextColor="#999"
           />
@@ -309,7 +298,9 @@ export default function ProfileScreen() {
           <TextInput
             style={styles.input}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={
+              setEmail
+            }
             placeholder="Enter your email"
             placeholderTextColor="#999"
             keyboardType="email-address"
@@ -327,7 +318,9 @@ export default function ProfileScreen() {
           <TextInput
             style={styles.input}
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={
+              setPhone
+            }
             placeholder="Enter your mobile number"
             placeholderTextColor="#999"
             keyboardType="phone-pad"
@@ -339,7 +332,9 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={handleSave}
+          onPress={
+            handleSave
+          }
           disabled={loading}
         >
 
@@ -360,7 +355,9 @@ export default function ProfileScreen() {
               />
 
               <Text
-                style={styles.buttonText}
+                style={
+                  styles.buttonText
+                }
               >
                 Save Changes
               </Text>
@@ -379,11 +376,7 @@ export default function ProfileScreen() {
           }
           onPress={() =>
             navigation.navigate(
-              'ChangePassword',
-              {
-                passenger:
-                  passenger,
-              }
+              'ChangePassword'
             )
           }
         >
@@ -391,7 +384,9 @@ export default function ProfileScreen() {
           <Ionicons
             name="lock-closed"
             size={22}
-            color={COLORS.primary}
+            color={
+              COLORS.primary
+            }
           />
 
           <Text
@@ -420,7 +415,9 @@ export default function ProfileScreen() {
           <Ionicons
             name="time"
             size={22}
-            color={COLORS.primary}
+            color={
+              COLORS.primary
+            }
           />
 
           <Text
@@ -439,7 +436,9 @@ export default function ProfileScreen() {
           style={
             styles.logoutButton
           }
-          onPress={handleLogout}
+          onPress={
+            handleLogout
+          }
         >
 
           <Ionicons
@@ -449,7 +448,9 @@ export default function ProfileScreen() {
           />
 
           <Text
-            style={styles.buttonText}
+            style={
+              styles.buttonText
+            }
           >
             Logout
           </Text>
@@ -459,30 +460,24 @@ export default function ProfileScreen() {
       </ScrollView>
 
     </SafeAreaView>
-
   );
-
 }
 
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: '#F4F7FC',
+    backgroundColor:
+      '#F4F7FC',
   },
 
   header: {
     backgroundColor:
       COLORS.primary,
-
     alignItems: 'center',
-
     paddingTop: 40,
-
     paddingBottom: 35,
-
     borderBottomLeftRadius: 30,
-
     borderBottomRightRadius: 30,
   },
 
@@ -492,189 +487,122 @@ const styles = StyleSheet.create({
 
   avatar: {
     width: 120,
-
     height: 120,
-
     borderRadius: 60,
-
     borderWidth: 4,
-
     borderColor: '#fff',
   },
 
   cameraButton: {
     position: 'absolute',
-
     bottom: 0,
-
     right: 0,
-
     width: 38,
-
     height: 38,
-
     borderRadius: 19,
-
     backgroundColor:
       COLORS.primary,
-
     justifyContent: 'center',
-
     alignItems: 'center',
-
     borderWidth: 2,
-
     borderColor: '#fff',
   },
 
   name: {
     color: '#fff',
-
     fontSize: 24,
-
     fontWeight: 'bold',
-
     marginTop: 15,
   },
 
   email: {
     color: '#E5E7EB',
-
     fontSize: 15,
-
     marginTop: 5,
   },
 
   card: {
     backgroundColor: '#fff',
-
     marginHorizontal: 20,
-
     marginTop: 25,
-
     borderRadius: 20,
-
     padding: 20,
-
     elevation: 5,
   },
 
   label: {
     fontSize: 15,
-
     fontWeight: '600',
-
     color: COLORS.black,
-
     marginBottom: 8,
-
     marginTop: 15,
   },
 
   input: {
     height: 50,
-
     borderWidth: 1,
-
     borderColor: '#D9D9D9',
-
     borderRadius: 12,
-
     paddingHorizontal: 15,
-
     fontSize: 16,
-
     backgroundColor: '#F9FAFB',
-
     color: COLORS.black,
   },
 
   button: {
     marginHorizontal: 20,
-
     marginTop: 20,
-
     height: 55,
-
     borderRadius: 15,
-
     backgroundColor:
       COLORS.primary,
-
     flexDirection: 'row',
-
     justifyContent: 'center',
-
     alignItems: 'center',
-
     elevation: 5,
   },
 
   secondaryButton: {
     marginHorizontal: 20,
-
     marginTop: 15,
-
     height: 55,
-
     borderRadius: 15,
-
     backgroundColor: '#fff',
-
     borderWidth: 1,
-
     borderColor:
       COLORS.primary,
-
     flexDirection: 'row',
-
     justifyContent: 'center',
-
     alignItems: 'center',
-
     elevation: 2,
   },
 
   logoutButton: {
     marginHorizontal: 20,
-
     marginTop: 15,
-
     marginBottom: 40,
-
     height: 55,
-
     borderRadius: 15,
-
-    backgroundColor: '#EF4444',
-
+    backgroundColor:
+      '#EF4444',
     flexDirection: 'row',
-
     justifyContent: 'center',
-
     alignItems: 'center',
-
     elevation: 5,
   },
 
   buttonText: {
     color: '#fff',
-
     fontSize: 17,
-
     fontWeight: 'bold',
-
     marginLeft: 8,
   },
 
   secondaryButtonText: {
     color:
       COLORS.primary,
-
     fontSize: 17,
-
     fontWeight: 'bold',
-
     marginLeft: 8,
   },
 

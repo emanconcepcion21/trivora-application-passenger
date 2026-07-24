@@ -1,5 +1,10 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import {
+  useNavigation,
+} from '@react-navigation/native';
+
+import React, {
+  useState,
+} from 'react';
 
 import {
   SafeAreaView,
@@ -15,153 +20,237 @@ import {
   Alert,
 } from 'react-native';
 
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Ionicons,
+} from '@expo/vector-icons';
+
 import COLORS from '../theme/colors';
+
+import {
+  usePassenger,
+} from '../context/PassengerContext';
 
 export default function LoginScreen() {
 
-  const navigation = useNavigation<any>();
+  const navigation =
+    useNavigation<any>();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // GET PASSENGER CONTEXT
+  const {
+    setPassenger,
+  } = usePassenger();
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [
+    email,
+    setEmail,
+  ] = useState('');
 
-  const handleLogin = async () => {
+  const [
+    password,
+    setPassword,
+  ] = useState('');
 
-    // BASIC VALIDATION
+  const [
+    showPassword,
+    setShowPassword,
+  ] = useState(false);
 
-    if (!email.trim() || !password.trim()) {
+  const [
+    rememberMe,
+    setRememberMe,
+  ] = useState(false);
 
-      Alert.alert(
-        'Login Required',
-        'Please enter your email and password.'
-      );
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
 
-      return;
-    }
+  const handleLogin =
+    async () => {
 
-    setLoading(true);
+      // BASIC VALIDATION
 
-    try {
-
-      const response = await fetch(
-        'http://192.168.8.33/passenger_api/login.php',
-        {
-          method: 'POST',
-
-          headers: {
-            'Content-Type': 'application/json',
-          },
-
-          body: JSON.stringify({
-            email: email.trim(),
-            password: password,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      console.log(
-        'LOGIN RESPONSE:',
-        data
-      );
-
-      if (data.success) {
+      if (
+        !email.trim() ||
+        !password.trim()
+      ) {
 
         Alert.alert(
-          'Login Successful',
-          `Welcome back, ${
-            data.passenger?.full_name ||
-            'Passenger'
-          }!`,
-          [
+          'Login Required',
+          'Please enter your email and password.'
+        );
+
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+
+        const response =
+          await fetch(
+            'http://192.168.8.33/passenger_api/login.php',
             {
-              text: 'Continue',
+              method: 'POST',
 
-              onPress: () => {
-
-                // PASS PASSENGER DATA TO MAIN
-
-                navigation.replace(
-                  'Main',
-                  {
-                    passenger: data.passenger,
-                  }
-                );
-
+              headers: {
+                'Content-Type':
+                  'application/json',
               },
-            },
-          ]
+
+              body: JSON.stringify({
+                email:
+                  email.trim(),
+
+                password:
+                  password,
+              }),
+            }
+          );
+
+        const data =
+          await response.json();
+
+        console.log(
+          'LOGIN RESPONSE:',
+          data
         );
 
-      } else {
+        if (data.success) {
+
+          // SAVE LOGGED-IN PASSENGER
+          // TO PASSENGER CONTEXT
+
+          if (
+            data.passenger
+          ) {
+
+            setPassenger(
+              data.passenger
+            );
+
+            console.log(
+              'PASSENGER SAVED TO CONTEXT:',
+              data.passenger
+            );
+
+          }
+
+          Alert.alert(
+            'Login Successful',
+
+            `Welcome back, ${
+              data.passenger?.full_name ||
+              'Passenger'
+            }!`,
+
+            [
+              {
+                text:
+                  'Continue',
+
+                onPress:
+                  () => {
+
+                    navigation.replace(
+                      'Main'
+                    );
+
+                  },
+              },
+            ]
+          );
+
+        } else {
+
+          Alert.alert(
+            'Login Failed',
+
+            data.message ||
+              'Invalid email or password.'
+          );
+
+        }
+
+      } catch (
+        error
+      ) {
+
+        console.log(
+          'LOGIN ERROR:',
+          error
+        );
 
         Alert.alert(
-          'Login Failed',
-          data.message ||
-            'Invalid email or password.'
+          'Connection Error',
+
+          'Unable to connect to the server. Please make sure XAMPP Apache is running.'
         );
+
+      } finally {
+
+        setLoading(false);
 
       }
 
-    } catch (error) {
-
-      console.log(
-        'LOGIN ERROR:',
-        error
-      );
-
-      Alert.alert(
-        'Connection Error',
-        'Unable to connect to the server. Please make sure XAMPP Apache is running.'
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
+    };
 
   return (
 
     <SafeAreaView
-      style={styles.container}
+      style={
+        styles.container
+      }
     >
 
       <StatusBar
-        backgroundColor={COLORS.primary}
+        backgroundColor={
+          COLORS.primary
+        }
         barStyle="light-content"
       />
 
       <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={
+          false
+        }
+        contentContainerStyle={
+          styles.scroll
+        }
       >
 
         {/* LOGO */}
 
         <View
-          style={styles.logoContainer}
+          style={
+            styles.logoContainer
+          }
         >
 
           <Image
-            source={require(
-              '../assets/trivora_icon.png'
-            )}
-            style={styles.logo}
+            source={
+              require(
+                '../assets/trivora_icon.png'
+              )
+            }
+            style={
+              styles.logo
+            }
           />
 
-          <Text style={styles.title}>
+          <Text
+            style={
+              styles.title
+            }
+          >
             Welcome Back
           </Text>
 
-          <Text style={styles.subtitle}>
+          <Text
+            style={
+              styles.subtitle
+            }
+          >
             Login to continue using the
             TRIVORA Passenger App.
           </Text>
@@ -170,30 +259,48 @@ export default function LoginScreen() {
 
         {/* LOGIN CARD */}
 
-        <View style={styles.card}>
+        <View
+          style={
+            styles.card
+          }
+        >
 
           {/* EMAIL */}
 
-          <Text style={styles.label}>
+          <Text
+            style={
+              styles.label
+            }
+          >
             Email Address
           </Text>
 
           <View
-            style={styles.inputContainer}
+            style={
+              styles.inputContainer
+            }
           >
 
             <Ionicons
               name="mail-outline"
               size={22}
-              color={COLORS.gray}
+              color={
+                COLORS.gray
+              }
             />
 
             <TextInput
               placeholder="Enter your email"
               placeholderTextColor="#999"
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
+              style={
+                styles.input
+              }
+              value={
+                email
+              }
+              onChangeText={
+                setEmail
+              }
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -202,36 +309,51 @@ export default function LoginScreen() {
 
           {/* PASSWORD */}
 
-          <Text style={styles.label}>
+          <Text
+            style={
+              styles.label
+            }
+          >
             Password
           </Text>
 
           <View
-            style={styles.inputContainer}
+            style={
+              styles.inputContainer
+            }
           >
 
             <Ionicons
               name="lock-closed-outline"
               size={22}
-              color={COLORS.gray}
+              color={
+                COLORS.gray
+              }
             />
 
             <TextInput
               placeholder="Enter your password"
               placeholderTextColor="#999"
-              style={styles.input}
+              style={
+                styles.input
+              }
               secureTextEntry={
                 !showPassword
               }
-              value={password}
-              onChangeText={setPassword}
+              value={
+                password
+              }
+              onChangeText={
+                setPassword
+              }
             />
 
             <TouchableOpacity
-              onPress={() =>
-                setShowPassword(
-                  !showPassword
-                )
+              onPress={
+                () =>
+                  setShowPassword(
+                    !showPassword
+                  )
               }
             >
 
@@ -242,7 +364,9 @@ export default function LoginScreen() {
                     : 'eye-outline'
                 }
                 size={22}
-                color={COLORS.gray}
+                color={
+                  COLORS.gray
+                }
               />
 
             </TouchableOpacity>
@@ -252,15 +376,20 @@ export default function LoginScreen() {
           {/* OPTIONS */}
 
           <View
-            style={styles.options}
+            style={
+              styles.options
+            }
           >
 
             <TouchableOpacity
-              style={styles.remember}
-              onPress={() =>
-                setRememberMe(
-                  !rememberMe
-                )
+              style={
+                styles.remember
+              }
+              onPress={
+                () =>
+                  setRememberMe(
+                    !rememberMe
+                  )
               }
             >
 
@@ -271,7 +400,9 @@ export default function LoginScreen() {
                     : 'square-outline'
                 }
                 size={22}
-                color={COLORS.primary}
+                color={
+                  COLORS.primary
+                }
               />
 
               <Text
@@ -285,15 +416,18 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() =>
-                navigation.navigate(
-                  'ForgotPassword'
-                )
+              onPress={
+                () =>
+                  navigation.navigate(
+                    'ForgotPassword'
+                  )
               }
             >
 
               <Text
-                style={styles.forgot}
+                style={
+                  styles.forgot
+                }
               >
                 Forgot Password?
               </Text>
@@ -305,9 +439,15 @@ export default function LoginScreen() {
           {/* LOGIN BUTTON */}
 
           <TouchableOpacity
-            style={styles.loginButton}
-            onPress={handleLogin}
-            disabled={loading}
+            style={
+              styles.loginButton
+            }
+            onPress={
+              handleLogin
+            }
+            disabled={
+              loading
+            }
           >
 
             {loading ? (
@@ -319,7 +459,9 @@ export default function LoginScreen() {
             ) : (
 
               <Text
-                style={styles.loginText}
+                style={
+                  styles.loginText
+                }
               >
                 LOGIN
               </Text>
@@ -330,24 +472,33 @@ export default function LoginScreen() {
 
           {/* REGISTER */}
 
-          <View style={styles.bottom}>
+          <View
+            style={
+              styles.bottom
+            }
+          >
 
             <Text
-              style={styles.bottomText}
+              style={
+                styles.bottomText
+              }
             >
               Don't have an account?
             </Text>
 
             <TouchableOpacity
-              onPress={() =>
-                navigation.navigate(
-                  'Register'
-                )
+              onPress={
+                () =>
+                  navigation.navigate(
+                    'Register'
+                  )
               }
             >
 
               <Text
-                style={styles.register}
+                style={
+                  styles.register
+                }
               >
                 Create Account
               </Text>
@@ -366,150 +517,190 @@ export default function LoginScreen() {
 
 }
 
-const styles = StyleSheet.create({
+const styles =
+  StyleSheet.create({
 
-  container: {
-    flex: 1,
-    backgroundColor:
-      COLORS.background,
-  },
-
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: 30,
-  },
-
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-
-  logo: {
-    width: 270,
-    height: 150,
-    resizeMode: 'contain',
-    marginBottom: 10,
-  },
-
-  title: {
-    fontSize: 34,
-    fontWeight: 'bold',
-    color: COLORS.black,
-    marginTop: 15,
-  },
-
-  subtitle: {
-    fontSize: 15,
-    color: COLORS.gray,
-    textAlign: 'center',
-    marginTop: 8,
-    paddingHorizontal: 35,
-    lineHeight: 22,
-  },
-
-  card: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 20,
-    borderRadius: 25,
-    padding: 25,
-    elevation: 8,
-
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-
-    shadowOffset: {
-      width: 0,
-      height: 5,
+    container: {
+      flex: 1,
+      backgroundColor:
+        COLORS.background,
     },
-  },
 
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.black,
-    marginBottom: 8,
-    marginTop: 15,
-  },
+    scroll: {
+      flexGrow: 1,
+      justifyContent:
+        'center',
+      paddingVertical: 30,
+    },
 
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    height: 58,
-  },
+    logoContainer: {
+      alignItems:
+        'center',
+      marginTop: 20,
+      marginBottom: 20,
+    },
 
-  input: {
-    flex: 1,
-    fontSize: 16,
-    marginLeft: 10,
-    color: COLORS.black,
-  },
+    logo: {
+      width: 270,
+      height: 150,
+      resizeMode:
+        'contain',
+      marginBottom: 10,
+    },
 
-  options: {
-    marginTop: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+    title: {
+      fontSize: 34,
+      fontWeight:
+        'bold',
+      color:
+        COLORS.black,
+      marginTop: 15,
+    },
 
-  remember: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+    subtitle: {
+      fontSize: 15,
+      color:
+        COLORS.gray,
+      textAlign:
+        'center',
+      marginTop: 8,
+      paddingHorizontal: 35,
+      lineHeight: 22,
+    },
 
-  rememberText: {
-    marginLeft: 8,
-    color: COLORS.gray,
-    fontSize: 15,
-  },
+    card: {
+      backgroundColor:
+        '#FFFFFF',
+      marginHorizontal: 20,
+      borderRadius: 25,
+      padding: 25,
+      elevation: 8,
 
-  forgot: {
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
+      shadowColor:
+        '#000',
 
-  loginButton: {
-    marginTop: 30,
-    backgroundColor: COLORS.primary,
-    borderRadius: 15,
-    height: 58,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-  },
+      shadowOpacity:
+        0.15,
 
-  loginText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
+      shadowRadius:
+        10,
 
-  bottom: {
-    marginTop: 30,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
+    },
 
-  bottomText: {
-    color: COLORS.gray,
-    fontSize: 15,
-  },
+    label: {
+      fontSize: 15,
+      fontWeight:
+        '600',
+      color:
+        COLORS.black,
+      marginBottom: 8,
+      marginTop: 15,
+    },
 
-  register: {
-    marginLeft: 6,
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
+    inputContainer: {
+      flexDirection:
+        'row',
+      alignItems:
+        'center',
+      backgroundColor:
+        '#F8FAFC',
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius: 15,
+      paddingHorizontal: 15,
+      height: 58,
+    },
 
-});
+    input: {
+      flex: 1,
+      fontSize: 16,
+      marginLeft: 10,
+      color:
+        COLORS.black,
+    },
+
+    options: {
+      marginTop: 18,
+      flexDirection:
+        'row',
+      justifyContent:
+        'space-between',
+      alignItems:
+        'center',
+    },
+
+    remember: {
+      flexDirection:
+        'row',
+      alignItems:
+        'center',
+    },
+
+    rememberText: {
+      marginLeft: 8,
+      color:
+        COLORS.gray,
+      fontSize: 15,
+    },
+
+    forgot: {
+      color:
+        COLORS.primary,
+      fontWeight:
+        'bold',
+      fontSize: 15,
+    },
+
+    loginButton: {
+      marginTop: 30,
+      backgroundColor:
+        COLORS.primary,
+      borderRadius: 15,
+      height: 58,
+      justifyContent:
+        'center',
+      alignItems:
+        'center',
+      elevation: 5,
+    },
+
+    loginText: {
+      color:
+        '#FFFFFF',
+      fontSize: 18,
+      fontWeight:
+        'bold',
+      letterSpacing: 1,
+    },
+
+    bottom: {
+      marginTop: 30,
+      flexDirection:
+        'row',
+      justifyContent:
+        'center',
+      alignItems:
+        'center',
+    },
+
+    bottomText: {
+      color:
+        COLORS.gray,
+      fontSize: 15,
+    },
+
+    register: {
+      marginLeft: 6,
+      color:
+        COLORS.primary,
+      fontWeight:
+        'bold',
+      fontSize: 15,
+    },
+
+  });

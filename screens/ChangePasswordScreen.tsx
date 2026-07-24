@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import {
   SafeAreaView,
   View,
@@ -16,8 +17,13 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
+import { usePassenger } from '../context/PassengerContext';
+
 export default function ChangePasswordScreen() {
   const navigation = useNavigation<any>();
+
+  // GET CURRENT LOGGED-IN PASSENGER
+  const { passenger } = usePassenger();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -30,7 +36,6 @@ export default function ChangePasswordScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleChangePassword = async () => {
-
     // CHECK EMPTY FIELDS
 
     if (
@@ -41,6 +46,17 @@ export default function ChangePasswordScreen() {
       Alert.alert(
         'Required Fields',
         'Please fill in all password fields.'
+      );
+
+      return;
+    }
+
+    // CHECK PASSENGER
+
+    if (!passenger?.id) {
+      Alert.alert(
+        'Error',
+        'Passenger information is not available. Please login again.'
       );
 
       return;
@@ -82,16 +98,8 @@ export default function ChangePasswordScreen() {
     setLoading(true);
 
     try {
-
-      // IMPORTANT:
-      // TEMPORARY PASSENGER ID
-      //
-      // Since we removed AsyncStorage,
-      // use the logged-in passenger ID here.
-      //
-      // Palitan ito kapag may proper session/user state na tayo.
-
-      const passengerId = 2;
+      // USE ACTUAL LOGGED-IN PASSENGER ID
+      const passengerId = passenger.id;
 
       const response = await fetch(
         'http://192.168.8.33/passenger_api/change_password.php',
@@ -119,7 +127,6 @@ export default function ChangePasswordScreen() {
       );
 
       if (data.success) {
-
         Alert.alert(
           'Success',
           data.message ||
@@ -127,8 +134,8 @@ export default function ChangePasswordScreen() {
           [
             {
               text: 'OK',
-              onPress: () => {
 
+              onPress: () => {
                 // CLEAR PASSWORD FIELDS
 
                 setCurrentPassword('');
@@ -138,24 +145,18 @@ export default function ChangePasswordScreen() {
                 // GO BACK
 
                 navigation.goBack();
-
               },
             },
           ]
         );
-
       } else {
-
         Alert.alert(
           'Change Password Failed',
           data.message ||
             'Unable to change password.'
         );
-
       }
-
     } catch (error) {
-
       console.log(
         'CHANGE PASSWORD ERROR:',
         error
@@ -165,11 +166,8 @@ export default function ChangePasswordScreen() {
         'Connection Error',
         'Unable to connect to the server. Please make sure XAMPP Apache is running.'
       );
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
