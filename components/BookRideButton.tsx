@@ -1,32 +1,34 @@
 import React from 'react';
-import { useNavigation } from '@react-navigation/native';
 import {
+  View,
   TouchableOpacity,
   Text,
   StyleSheet,
   Image,
 } from 'react-native';
 
+import { useNavigation } from '@react-navigation/native';
 import COLORS from '../theme/colors';
 
 export default function BookRideButton() {
   const navigation = useNavigation<any>();
 
   return (
-    <TouchableOpacity
-      style={styles.button}
-      activeOpacity={0.85}
-      onPress={() => navigation.navigate('Booking')}
-    >
-      <Image
-        source={require('../assets/tricycle.png')}
-        style={styles.tricycleIcon}
-      />
+    <View>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Map')}
+      >
+        <Image
+          source={require('../assets/tricycle.png')}
+          style={styles.icon}
+        />
 
-      <Text style={styles.text}>
-        BOOK A TRICYCLE
-      </Text>
-    </TouchableOpacity>
+        <Text style={styles.buttonText}>
+          Book Ride
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -34,28 +36,26 @@ const styles = StyleSheet.create({
   button: {
     marginHorizontal: 20,
     marginTop: 20,
+    height: 58,
+    borderRadius: 16,
     backgroundColor: COLORS.primary,
-    borderRadius: 20,
-    padding: 18,
-
-    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-
+    flexDirection: 'row',
     elevation: 5,
   },
 
-  tricycleIcon: {
-    width: 32,
-    height: 32,
-    tintColor: '#FFFFFF',
+  icon: {
+    width: 24,
+    height: 24,
     resizeMode: 'contain',
+    tintColor: '#FFFFFF',
+    marginRight: 10,
   },
 
-  text: {
+  buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 10,
   },
 });

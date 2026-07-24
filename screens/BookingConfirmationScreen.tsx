@@ -5,6 +5,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
@@ -13,7 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
 export default function BookingConfirmationScreen() {
-
   const navigation = useNavigation<any>();
 
   return (
@@ -55,10 +55,9 @@ export default function BookingConfirmationScreen() {
 
         <View style={styles.row}>
 
-          <Ionicons
-            name="car-sport"
-            size={22}
-            color={COLORS.primary}
+          <Image
+            source={require('../assets/trivora_icon.png')}
+            style={styles.tricycleIcon}
           />
 
           <Text style={styles.text}>
@@ -96,19 +95,22 @@ export default function BookingConfirmationScreen() {
         </View>
 
       </View>
-            <TouchableOpacity
+
+      <TouchableOpacity
         style={styles.trackButton}
         onPress={() => navigation.navigate('DriverDetails')}
       >
+
         <Ionicons
           name="navigate"
           size={22}
-          color="#fff"
+          color="#FFFFFF"
         />
 
         <Text style={styles.buttonText}>
           TRACK RIDE
         </Text>
+
       </TouchableOpacity>
 
     </SafeAreaView>
@@ -164,6 +166,12 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
 
+  tricycleIcon: {
+    width: 28,
+    height: 28,
+    resizeMode: 'contain',
+  },
+
   text: {
     marginLeft: 15,
     fontSize: 17,
@@ -183,7 +191,7 @@ const styles = StyleSheet.create({
 
   buttonText: {
     marginLeft: 10,
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 1,

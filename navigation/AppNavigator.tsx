@@ -3,10 +3,14 @@ import { NavigationContainer } from '@react-navigation/native';
 
 import AuthNavigator from './AuthNavigator';
 
+import { PassengerProvider } from '../context/PassengerContext';
+
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
-      <AuthNavigator />
-    </NavigationContainer>
+    <PassengerProvider>
+      <NavigationContainer>
+        <AuthNavigator />
+      </NavigationContainer>
+    </PassengerProvider>
   );
 }

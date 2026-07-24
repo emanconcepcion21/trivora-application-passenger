@@ -1,31 +1,22 @@
 import React from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
-  Alert,
+  Image,
 } from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import COLORS from '../theme/colors';
 
 export default function DriverDetailsScreen() {
-
   const navigation = useNavigation<any>();
 
   return (
-    <SafeAreaView style={styles.container}>
-
-      <Text style={styles.header}>
-        Driver Details
-      </Text>
-
+    <View style={styles.container}>
       <View style={styles.card}>
-
         <Image
           source={{
             uri: 'https://i.pravatar.cc/300?img=12',
@@ -37,199 +28,116 @@ export default function DriverDetailsScreen() {
           Juan Dela Cruz
         </Text>
 
-        <Text style={styles.rating}>
-          ⭐ 4.9 (245 Trips)
+        <Text style={styles.vehicle}>
+          Honda TMX 155
         </Text>
 
-        <View style={styles.infoRow}>
+        <Text style={styles.plate}>
+          Plate No: ABC-1234
+        </Text>
+
+        <View style={styles.ratingRow}>
           <Ionicons
-            name="car-sport"
-            size={22}
-            color={COLORS.primary}
+            name="star"
+            size={20}
+            color="#FFD700"
           />
 
-          <Text style={styles.info}>
-            Tricycle No. TRI-0456
+          <Text style={styles.rating}>
+            4.9 Rating
           </Text>
         </View>
 
-        <View style={styles.infoRow}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            navigation.replace('Tracking')
+          }
+        >
           <Ionicons
-            name="call"
+            name="navigate"
             size={22}
-            color={COLORS.primary}
+            color="#fff"
           />
 
-          <Text style={styles.info}>
-            +63 912 345 6789
+          <Text style={styles.buttonText}>
+            Start Tracking
           </Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Ionicons
-            name="location"
-            size={22}
-            color={COLORS.primary}
-          />
-
-          <Text style={styles.info}>
-            Current Location: Nasugbu Plaza
-          </Text>
-        </View>
-
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity
-        style={styles.callButton}
-        onPress={() =>
-          Alert.alert(
-            'Call Driver',
-            'Calling Juan Dela Cruz...'
-          )
-        }
-      >
-        <Ionicons
-          name="call"
-          size={22}
-          color="#fff"
-        />
-
-        <Text style={styles.buttonText}>
-          Call Driver
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.messageButton}
-        onPress={() =>
-          Alert.alert(
-            'Message',
-            'Messaging feature coming soon.'
-          )
-        }
-      >
-        <Ionicons
-          name="chatbubble"
-          size={22}
-          color="#fff"
-        />
-
-        <Text style={styles.buttonText}>
-          Message Driver
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.trackButton}
-        onPress={() =>
-          navigation.navigate('Tracking')
-        }
-      >
-        <Ionicons
-          name="navigate"
-          size={22}
-          color="#fff"
-        />
-
-        <Text style={styles.buttonText}>
-          Start Tracking
-        </Text>
-      </TouchableOpacity>
-
-    </SafeAreaView>
+    </View>
   );
 }
-
 const styles = StyleSheet.create({
-
-  container:{
-    flex:1,
-    backgroundColor:COLORS.background,
-    padding:20,
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F7FB',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
 
-  header:{
-    fontSize:28,
-    fontWeight:'bold',
-    color:COLORS.primary,
-    marginBottom:20,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    elevation: 8,
   },
 
-  card:{
-    backgroundColor:'#fff',
-    borderRadius:20,
-    padding:25,
-    alignItems:'center',
-    elevation:5,
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 20,
   },
 
-  avatar:{
-    width:120,
-    height:120,
-    borderRadius:60,
-    marginBottom:15,
+  name: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.primary,
   },
 
-  name:{
-    fontSize:24,
-    fontWeight:'bold',
-    color:COLORS.black,
+  vehicle: {
+    marginTop: 8,
+    fontSize: 18,
+    color: COLORS.black,
   },
 
-  rating:{
-    color:COLORS.gray,
-    marginTop:5,
-    marginBottom:20,
+  plate: {
+    marginTop: 5,
+    fontSize: 16,
+    color: '#666',
   },
 
-  infoRow:{
-    flexDirection:'row',
-    alignItems:'center',
-    width:'100%',
-    marginVertical:8,
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
   },
 
-  info:{
-    marginLeft:12,
-    fontSize:16,
-    color:COLORS.black,
+  rating: {
+    marginLeft: 8,
+    fontSize: 17,
+    fontWeight: '600',
+    color: COLORS.black,
   },
 
-  callButton:{
-    backgroundColor:COLORS.success,
-    marginTop:25,
-    height:55,
-    borderRadius:15,
-    justifyContent:'center',
-    alignItems:'center',
-    flexDirection:'row',
+  button: {
+    marginTop: 35,
+    width: '100%',
+    height: 55,
+    backgroundColor: COLORS.primary,
+    borderRadius: 15,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
   },
 
-  messageButton:{
-    backgroundColor:COLORS.primary,
-    marginTop:15,
-    height:55,
-    borderRadius:15,
-    justifyContent:'center',
-    alignItems:'center',
-    flexDirection:'row',
+  buttonText: {
+    marginLeft: 10,
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: 'bold',
   },
-
-  trackButton:{
-    backgroundColor:'#F59E0B',
-    marginTop:15,
-    height:55,
-    borderRadius:15,
-    justifyContent:'center',
-    alignItems:'center',
-    flexDirection:'row',
-  },
-
-  buttonText:{
-    color:'#fff',
-    fontSize:17,
-    fontWeight:'bold',
-    marginLeft:8,
-  },
-
 });

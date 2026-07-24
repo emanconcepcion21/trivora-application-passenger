@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -8,49 +7,40 @@ import {
   Image,
 } from 'react-native';
 
-import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
 const notifications = [
   {
     id: '1',
-    title: 'Ride Booked',
-    message: 'Your booking has been received.',
-    time: 'Just now',
-    color: '#2563EB',
-    type: 'tricycle',
+    title: 'Driver Accepted',
+    message: 'Juan Dela Cruz accepted your booking.',
+    time: '2 mins ago',
   },
   {
     id: '2',
-    icon: 'person',
-    title: 'Driver Assigned',
-    message: 'Juan Dela Cruz accepted your ride.',
-    time: '5 mins ago',
-    color: '#16A34A',
+    title: 'Driver Arrived',
+    message: 'Your driver has arrived at your pickup location.',
+    time: '10 mins ago',
   },
   {
     id: '3',
-    icon: 'navigate',
-    title: 'Driver Arriving',
-    message: 'Driver is 2 minutes away.',
-    time: '10 mins ago',
-    color: '#F59E0B',
+    title: 'Trip Completed',
+    message: 'Thank you for riding with TRIVORA.',
+    time: 'Yesterday',
   },
   {
     id: '4',
-    icon: 'checkmark-circle',
-    title: 'Ride Completed',
-    message: 'Thank you for using TRIVORA.',
+    title: 'Rate Your Driver',
+    message: 'Please leave a rating for your recent trip.',
     time: 'Yesterday',
-    color: '#7C3AED',
   },
 ];
 
 export default function NotificationScreen() {
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
 
-      <Text style={styles.header}>
+      <Text style={styles.title}>
         Notifications
       </Text>
 
@@ -59,34 +49,20 @@ export default function NotificationScreen() {
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-
           <View style={styles.card}>
 
-            <View
-              style={[
-                styles.iconContainer,
-                { backgroundColor: item.color },
-              ]}
-            >
+            <View style={styles.iconContainer}>
 
-              {item.type === 'tricycle' ? (
-                <Image
-                  source={require('../assets/tricycle.png')}
-                  style={styles.tricycleIcon}
-                />
-              ) : (
-                <Ionicons
-                  name={item.icon as any}
-                  size={28}
-                  color="#fff"
-                />
-              )}
+              <Image
+                source={require('../assets/tricycle.png')}
+                style={styles.tricycle}
+              />
 
             </View>
 
             <View style={styles.info}>
 
-              <Text style={styles.title}>
+              <Text style={styles.heading}>
                 {item.title}
               </Text>
 
@@ -101,23 +77,22 @@ export default function NotificationScreen() {
             </View>
 
           </View>
-
         )}
       />
 
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: 20,
+    backgroundColor: '#F5F7FB',
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
 
-  header: {
+  title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.primary,
@@ -125,24 +100,25 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: COLORS.white,
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 15,
     marginBottom: 15,
-    flexDirection: 'row',
+    elevation: 5,
     alignItems: 'center',
-    elevation: 3,
   },
 
   iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 55,
+    height: 55,
+    borderRadius: 28,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
-  tricycleIcon: {
+  tricycle: {
     width: 30,
     height: 30,
     resizeMode: 'contain',
@@ -154,7 +130,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
 
-  title: {
+  heading: {
     fontSize: 17,
     fontWeight: 'bold',
     color: COLORS.black,
@@ -162,14 +138,13 @@ const styles = StyleSheet.create({
 
   message: {
     marginTop: 5,
-    color: COLORS.gray,
     fontSize: 14,
+    color: '#666',
   },
 
   time: {
     marginTop: 8,
-    color: '#9CA3AF',
     fontSize: 12,
+    color: '#999',
   },
-
 });

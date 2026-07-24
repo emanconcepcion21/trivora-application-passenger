@@ -1,234 +1,255 @@
-import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import {
   SafeAreaView,
-  ScrollView,
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
-  StatusBar,
   Image,
-  ActivityIndicator,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
-export default function RegisterScreen() {
+export default function ProfileScreen() {
   const navigation = useNavigation<any>();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
 
-  if (
-    !firstName ||
-    !lastName ||
-    !email ||
-    !phone ||
-    !password ||
-    !confirmPassword
-  ) {
-    Alert.alert(
-      'Required',
-      'Please complete all fields.'
-    );
-    return;
-  }
+    // CHECK EMPTY FIELDS
 
-  if (password !== confirmPassword) {
-    Alert.alert(
-      'Password Error',
-      'Passwords do not match.'
-    );
-    return;
-  }
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !password.trim()
+    ) {
+      Alert.alert(
+        'Incomplete Information',
+        'Please fill in all fields.'
+      );
+      return;
+    }
 
-  setLoading(true);
+    // CHECK PASSWORD LENGTH
 
-  setTimeout(() => {
+    if (password.length < 6) {
+      Alert.alert(
+        'Invalid Password',
+        'Password must be at least 6 characters.'
+      );
+      return;
+    }
 
-    setLoading(false);
+    setLoading(true);
 
-   Alert.alert(
-  'Success',
-  'Passenger account created successfully!',
-  [
-    {
-      text: 'OK',
-      onPress: () => navigation.replace('Login'),
-    },
-  ]
-);
+    try {
 
-  }, 1500);
-};
+      const response = await fetch(
+        'http://192.168.8.33/passenger_api/register.php',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            full_name: name.trim(),
+            email: email.trim(),
+            phone: phone.trim(),
+            password: password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      console.log(
+        'REGISTER RESPONSE:',
+        data
+      );
+
+      if (data.success) {
+
+        Alert.alert(
+          'Registration Successful',
+          data.message ||
+            'Passenger registered successfully.',
+          [
+            {
+              text: 'OK',
+              onPress: () =>
+                navigation.replace('Login'),
+            },
+          ]
+        );
+
+      } else {
+
+        Alert.alert(
+          'Registration Failed',
+          data.message ||
+            'Unable to register passenger.'
+        );
+
+      }
+
+    } catch (error) {
+
+      console.log(
+        'REGISTER ERROR:',
+        error
+      );
+
+      Alert.alert(
+        'Connection Error',
+        'Unable to connect to the server. Please make sure XAMPP Apache and MySQL are running.'
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
 
-      <StatusBar
-        backgroundColor={COLORS.primary}
-        barStyle="light-content"
-      />
-
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
       >
 
-        <View style={styles.logoContainer}>
+        {/* HEADER */}
 
-          <Image
-            source={require('../assets/trivora_icon.png')}
-            style={styles.logo}
-          />
+        <View style={styles.header}>
 
-          <Text style={styles.title}>
-            Create Account
+          <View style={styles.avatarContainer}>
+
+            <Image
+              source={{
+                uri: 'https://i.pravatar.cc/300',
+              }}
+              style={styles.avatar}
+            />
+
+            <TouchableOpacity
+              style={styles.cameraButton}
+            >
+
+              <Ionicons
+                name="camera"
+                size={18}
+                color="#fff"
+              />
+
+            </TouchableOpacity>
+
+          </View>
+
+          <Text style={styles.name}>
+            {name || 'Create Your Account'}
           </Text>
 
-          <Text style={styles.subtitle}>
-            Register as a passenger and enjoy safe tricycle rides.
+          <Text style={styles.email}>
+            {email ||
+              'Register as a TRIVORA passenger'}
           </Text>
 
         </View>
 
+        {/* REGISTER CARD */}
+
         <View style={styles.card}>
 
-          {/* First Name */}
+          {/* FULL NAME */}
 
           <Text style={styles.label}>
-            First Name
+            Full Name
           </Text>
 
-          <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Enter your full name"
+            placeholderTextColor="#999"
+          />
 
-            <Ionicons
-              name="person-outline"
-              size={22}
-              color={COLORS.gray}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Enter first name"
-              value={firstName}
-              onChangeText={setFirstName}
-            />
-
-          </View>
-
-          {/* Last Name */}
+          {/* EMAIL */}
 
           <Text style={styles.label}>
-            Last Name
+            Email
           </Text>
 
-          <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Enter your email"
+            placeholderTextColor="#999"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-            <Ionicons
-              name="person-outline"
-              size={22}
-              color={COLORS.gray}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Enter last name"
-              value={lastName}
-              onChangeText={setLastName}
-            />
-
-          </View>
-
-          {/* Email */}
-
-          <Text style={styles.label}>
-            Email Address
-          </Text>
-
-          <View style={styles.inputContainer}>
-
-            <Ionicons
-              name="mail-outline"
-              size={22}
-              color={COLORS.gray}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Enter email"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-
-          </View>
-
-          {/* Mobile */}
+          {/* MOBILE NUMBER */}
 
           <Text style={styles.label}>
             Mobile Number
           </Text>
 
-          <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="Enter your mobile number"
+            placeholderTextColor="#999"
+            keyboardType="phone-pad"
+          />
 
-            <Ionicons
-              name="call-outline"
-              size={22}
-              color={COLORS.gray}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="09XXXXXXXXX"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-            />
-
-          </View>
-
-          {/* Password */}
+          {/* PASSWORD */}
 
           <Text style={styles.label}>
             Password
           </Text>
 
-          <View style={styles.inputContainer}>
-
-            <Ionicons
-              name="lock-closed-outline"
-              size={22}
-              color={COLORS.gray}
-            />
+          <View
+            style={styles.passwordContainer}
+          >
 
             <TextInput
-              style={styles.input}
-              placeholder="Enter password"
-              secureTextEntry={!showPassword}
+              style={styles.passwordInput}
               value={password}
               onChangeText={setPassword}
+              placeholder="Enter your password"
+              placeholderTextColor="#999"
+              secureTextEntry={
+                !showPassword
+              }
             />
 
             <TouchableOpacity
               onPress={() =>
-                setShowPassword(!showPassword)
+                setShowPassword(
+                  !showPassword
+                )
               }
             >
+
               <Ionicons
                 name={
                   showPassword
@@ -238,151 +259,145 @@ export default function RegisterScreen() {
                 size={22}
                 color={COLORS.gray}
               />
+
             </TouchableOpacity>
-
-          </View>
-
-          {/* Confirm Password */}
-
-          <Text style={styles.label}>
-            Confirm Password
-          </Text>
-
-          <View style={styles.inputContainer}>
-
-            <Ionicons
-              name="shield-checkmark-outline"
-              size={22}
-              color={COLORS.gray}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm password"
-              secureTextEntry={!showConfirm}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-
-            <TouchableOpacity
-              onPress={() =>
-                setShowConfirm(!showConfirm)
-              }
-            >
-              <Ionicons
-                name={
-                  showConfirm
-                    ? 'eye-off-outline'
-                    : 'eye-outline'
-                }
-                size={22}
-                color={COLORS.gray}
-              />
-            </TouchableOpacity>
-
-          </View>
-
-          <TouchableOpacity
-            style={styles.registerButton}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.registerText}>
-                CREATE ACCOUNT
-              </Text>
-            )}
-
-          </TouchableOpacity>
-
-          <View style={styles.bottom}>
-
-            <Text style={styles.bottomText}>
-              Already have an account?
-            </Text>
-
-            <TouchableOpacity
-  onPress={() => navigation.navigate('Login')}
->
-  <Text style={styles.login}>
-    Login
-  </Text>
-</TouchableOpacity>
 
           </View>
 
         </View>
+
+        {/* CREATE ACCOUNT */}
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+
+          {loading ? (
+
+            <ActivityIndicator
+              color="#fff"
+            />
+
+          ) : (
+
+            <>
+
+              <Ionicons
+                name="person-add"
+                size={22}
+                color="#fff"
+              />
+
+              <Text
+                style={styles.buttonText}
+              >
+                Create Account
+              </Text>
+
+            </>
+
+          )}
+
+        </TouchableOpacity>
+
+        {/* BACK TO LOGIN */}
+
+        <TouchableOpacity
+          style={
+            styles.secondaryButton
+          }
+          onPress={() =>
+            navigation.replace('Login')
+          }
+          disabled={loading}
+        >
+
+          <Ionicons
+            name="log-in-outline"
+            size={22}
+            color={COLORS.primary}
+          />
+
+          <Text
+            style={
+              styles.secondaryButtonText
+            }
+          >
+            Already have an account? Login
+          </Text>
+
+        </TouchableOpacity>
 
       </ScrollView>
 
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F4F7FC',
   },
 
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: 30,
-  },
-
-  logoContainer: {
+  header: {
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
-    marginBottom: 30,
+    paddingTop: 40,
+    paddingBottom: 35,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
 
-  logo: {
-    width: 250,
-    height: 130,
-    resizeMode: 'contain',
-    marginBottom: 5,
+  avatarContainer: {
+    position: 'relative',
   },
 
-  appName: {
-    fontSize: 32,
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: '#fff',
+  },
+
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+
+  name: {
+    color: '#fff',
+    fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.primary,
-    letterSpacing: 1,
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: COLORS.black,
     marginTop: 15,
   },
 
-  subtitle: {
+  email: {
+    color: '#E5E7EB',
     fontSize: 15,
-    color: COLORS.gray,
-    textAlign: 'center',
-    marginTop: 8,
-    paddingHorizontal: 35,
-    lineHeight: 22,
+    marginTop: 5,
   },
 
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
     marginHorizontal: 20,
-    borderRadius: 25,
-    padding: 25,
-
-    elevation: 8,
-
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
+    marginTop: 25,
+    borderRadius: 20,
+    padding: 20,
+    elevation: 5,
   },
 
   label: {
@@ -393,71 +408,73 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
 
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-
-    backgroundColor: '#F8FAFC',
-
+  input: {
+    height: 50,
     borderWidth: 1,
-    borderColor: COLORS.border,
-
-    borderRadius: 15,
-
+    borderColor: '#D9D9D9',
+    borderRadius: 12,
     paddingHorizontal: 15,
-
-    height: 58,
+    fontSize: 16,
+    backgroundColor: '#F9FAFB',
+    color: COLORS.black,
   },
 
-  input: {
+  passwordContainer: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#D9D9D9',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#F9FAFB',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  passwordInput: {
     flex: 1,
-    marginLeft: 10,
     fontSize: 16,
     color: COLORS.black,
   },
 
-  registerButton: {
-    marginTop: 30,
-
-    backgroundColor: COLORS.primary,
-
-    height: 58,
-
+  button: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    height: 55,
     borderRadius: 15,
-
+    backgroundColor: COLORS.primary,
+    flexDirection: 'row',
     justifyContent: 'center',
-
     alignItems: 'center',
-
     elevation: 5,
   },
 
-  registerText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
-
-  bottom: {
-    marginTop: 30,
-
+  secondaryButton: {
+    marginHorizontal: 20,
+    marginTop: 15,
+    marginBottom: 40,
+    height: 55,
+    borderRadius: 15,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
     flexDirection: 'row',
-
     justifyContent: 'center',
-
     alignItems: 'center',
+    elevation: 2,
   },
 
-  bottomText: {
-    color: COLORS.gray,
-    fontSize: 15,
-  },
-
-  login: {
-    marginLeft: 6,
-    color: COLORS.primary,
+  buttonText: {
+    color: '#fff',
+    fontSize: 17,
     fontWeight: 'bold',
-    fontSize: 15,
+    marginLeft: 8,
   },
+
+  secondaryButtonText: {
+    color: COLORS.primary,
+    fontSize: 17,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+
 });

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+
 import {
   SafeAreaView,
   View,
@@ -10,49 +10,209 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+
 import COLORS from '../theme/colors';
 
+import { usePassenger } from '../context/PassengerContext';
+
 export default function ProfileScreen() {
+
   const navigation = useNavigation<any>();
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState('Eman Esguerra');
-  const [email] = useState('emanc6620@gmail.com');
-  const [phone, setPhone] = useState('09678216267');
-  const [address, setAddress] = useState('Nasugbu, Batangas');
-  const [emergency, setEmergency] = useState('09123456789');
+  // GET CURRENT LOGGED-IN PASSENGER
+  const {
+    passenger,
+    logoutPassenger,
+  } = usePassenger();
 
-  const handleSave = () => {
-    setIsEditing(false);
-    Alert.alert(
-      'Success',
-      'Profile updated successfully.'
-    );
+  // PROFILE STATES
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const [address, setAddress] = useState(
+    'Nasugbu, Batangas'
+  );
+
+  const [emergency, setEmergency] = useState(
+    '09123456789'
+  );
+
+  const [loading, setLoading] = useState(false);
+
+  // LOAD PASSENGER DATA
+  // WHEN PROFILE SCREEN OPENS
+  useEffect(() => {
+
+    if (passenger) {
+
+      setName(
+        passenger.full_name || ''
+      );
+
+      setEmail(
+        passenger.email || ''
+      );
+
+      setPhone(
+        passenger.phone || ''
+      );
+
+    }
+
+  }, [passenger]);
+
+  // SAVE PROFILE
+  const handleSave = async () => {
+
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim()
+    ) {
+
+      Alert.alert(
+        'Incomplete Information',
+        'Please fill in all fields.'
+      );
+
+      return;
+    }
+
+    if (!passenger?.id) {
+
+      Alert.alert(
+        'Error',
+        'Passenger information is not available.'
+      );
+
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+
+      const response = await fetch(
+        'http://192.168.8.33/passenger_api/update_profile.php',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+
+            id: passenger.id,
+
+            full_name:
+              name.trim(),
+
+            email:
+              email.trim(),
+
+            phone:
+              phone.trim(),
+
+          }),
+        }
+      );
+
+      const data =
+        await response.json();
+
+      console.log(
+        'UPDATE PROFILE RESPONSE:',
+        data
+      );
+
+      if (data.success) {
+
+        setIsEditing(false);
+
+        Alert.alert(
+          'Success',
+          data.message ||
+            'Profile updated successfully.'
+        );
+
+      } else {
+
+        Alert.alert(
+          'Update Failed',
+          data.message ||
+            'Unable to update profile.'
+        );
+
+      }
+
+    } catch (error) {
+
+      console.log(
+        'UPDATE PROFILE ERROR:',
+        error
+      );
+
+      Alert.alert(
+        'Connection Error',
+        'Unable to connect to the server. Please make sure XAMPP Apache is running.'
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
   };
 
+  // LOGOUT
   const handleLogout = () => {
+
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
+
       [
         {
           text: 'Cancel',
           style: 'cancel',
         },
+
         {
           text: 'Logout',
           style: 'destructive',
-          onPress: () => navigation.replace('Login'),
+
+          onPress: () => {
+
+            // CLEAR CURRENT PASSENGER
+            logoutPassenger();
+
+            // RETURN TO LOGIN
+            navigation.replace(
+              'Login'
+            );
+
+          },
         },
       ]
     );
+
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+
+    <SafeAreaView
+      style={styles.container}
+    >
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -60,18 +220,34 @@ export default function ProfileScreen() {
 
         {/* HEADER */}
 
-        <View style={styles.header}>
+        <View
+          style={styles.header}
+        >
 
-          <View style={styles.avatarContainer}>
+          <View
+            style={
+              styles.avatarContainer
+            }
+          >
 
             <Image
               source={{
-                uri: 'https://i.pravatar.cc/300',
+                uri:
+                  passenger?.profile_image ||
+                  'https://i.pravatar.cc/300',
               }}
               style={styles.avatar}
             />
 
-            <TouchableOpacity style={styles.cameraButton}>
+            {/* CAMERA ICON
+                DESIGN ONLY
+                NO CAMERA / GALLERY FUNCTIONALITY */}
+
+            <TouchableOpacity
+              style={
+                styles.cameraButton
+              }
+            >
 
               <Ionicons
                 name="camera"
@@ -83,120 +259,294 @@ export default function ProfileScreen() {
 
           </View>
 
-          <Text style={styles.name}>
-            {name}
+          <Text
+            style={styles.name}
+          >
+            {name ||
+              'Passenger'}
           </Text>
 
-          <Text style={styles.email}>
-            {email}
+          <Text
+            style={styles.email}
+          >
+            {email ||
+              'No email available'}
           </Text>
 
         </View>
 
         {/* PROFILE CARD */}
 
-        <View style={styles.card}>
+        <View
+          style={styles.card}
+        >
 
-          <View style={styles.cardHeader}>
-            <Text style={styles.sectionTitle}>Profile Details</Text>
-            <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
-              <Ionicons name={isEditing ? "close" : "pencil"} size={22} color={COLORS.primary} />
+          {/* PROFILE DETAILS HEADER */}
+
+          <View
+            style={styles.cardHeader}
+          >
+
+            <Text
+              style={
+                styles.sectionTitle
+              }
+            >
+              Profile Details
+            </Text>
+
+            <TouchableOpacity
+              onPress={() =>
+                setIsEditing(
+                  !isEditing
+                )
+              }
+            >
+
+              <Ionicons
+                name={
+                  isEditing
+                    ? 'close'
+                    : 'pencil'
+                }
+                size={22}
+                color={
+                  COLORS.primary
+                }
+              />
+
             </TouchableOpacity>
+
           </View>
 
-          <Text style={styles.label}>
+          {/* FULL NAME */}
+
+          <Text
+            style={styles.label}
+          >
             Full Name
           </Text>
 
           <TextInput
-            style={[styles.input, !isEditing && styles.inputDisabled]}
+            style={[
+              styles.input,
+              !isEditing &&
+                styles.inputDisabled,
+            ]}
             value={name}
-            onChangeText={setName}
-            editable={isEditing}
+            onChangeText={
+              setName
+            }
+            placeholder="Enter your full name"
+            placeholderTextColor="#999"
+            editable={
+              isEditing
+            }
           />
 
-          <Text style={styles.label}>
+          {/* EMAIL */}
+
+          <Text
+            style={styles.label}
+          >
             Email
           </Text>
 
           <TextInput
-            style={[styles.input, styles.inputDisabled]}
+            style={[
+              styles.input,
+              styles.inputDisabled,
+            ]}
             value={email}
+            onChangeText={
+              setEmail
+            }
+            placeholder="Enter your email"
+            placeholderTextColor="#999"
+            keyboardType="email-address"
+            autoCapitalize="none"
             editable={false}
           />
 
-          <Text style={styles.label}>
+          {/* MOBILE NUMBER */}
+
+          <Text
+            style={styles.label}
+          >
             Mobile Number
           </Text>
 
           <TextInput
-            style={[styles.input, !isEditing && styles.inputDisabled]}
+            style={[
+              styles.input,
+              !isEditing &&
+                styles.inputDisabled,
+            ]}
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={
+              setPhone
+            }
+            placeholder="Enter your mobile number"
+            placeholderTextColor="#999"
             keyboardType="phone-pad"
-            editable={isEditing}
+            editable={
+              isEditing
+            }
           />
 
-          <Text style={styles.label}>
+          {/* ADDRESS */}
+
+          <Text
+            style={styles.label}
+          >
             Address
           </Text>
 
           <TextInput
-            style={[styles.input, !isEditing && styles.inputDisabled]}
+            style={[
+              styles.input,
+              !isEditing &&
+                styles.inputDisabled,
+            ]}
             value={address}
-            onChangeText={setAddress}
-            editable={isEditing}
+            onChangeText={
+              setAddress
+            }
+            editable={
+              isEditing
+            }
           />
 
-          <Text style={styles.label}>
+          {/* EMERGENCY CONTACT */}
+
+          <Text
+            style={styles.label}
+          >
             Emergency Contact
           </Text>
 
           <TextInput
-            style={[styles.input, !isEditing && styles.inputDisabled]}
+            style={[
+              styles.input,
+              !isEditing &&
+                styles.inputDisabled,
+            ]}
             value={emergency}
-            onChangeText={setEmergency}
+            onChangeText={
+              setEmergency
+            }
             keyboardType="phone-pad"
-            editable={isEditing}
+            editable={
+              isEditing
+            }
           />
 
         </View>
+
         {/* SAVE CHANGES */}
 
         {isEditing && (
+
           <TouchableOpacity
             style={styles.button}
-            onPress={handleSave}
+            onPress={
+              handleSave
+            }
+            disabled={
+              loading
+            }
           >
 
-            <Ionicons
-              name="save"
-              size={22}
-              color="#fff"
-            />
+            {loading ? (
 
-            <Text style={styles.buttonText}>
-              Save Changes
-            </Text>
+              <ActivityIndicator
+                color="#fff"
+              />
+
+            ) : (
+
+              <>
+
+                <Ionicons
+                  name="save"
+                  size={22}
+                  color="#fff"
+                />
+
+                <Text
+                  style={
+                    styles.buttonText
+                  }
+                >
+                  Save Changes
+                </Text>
+
+              </>
+
+            )}
 
           </TouchableOpacity>
+
         )}
 
         {/* CHANGE PASSWORD */}
 
         <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('ChangePassword')}
+          style={
+            styles.secondaryButton
+          }
+          onPress={() =>
+            navigation.navigate(
+              'ChangePassword'
+            )
+          }
         >
 
           <Ionicons
             name="lock-closed"
             size={22}
-            color={COLORS.primary}
+            color={
+              COLORS.primary
+            }
           />
 
-          <Text style={styles.secondaryButtonText}>
+          <Text
+            style={
+              styles.secondaryButtonText
+            }
+          >
             Change Password
+          </Text>
+
+        </TouchableOpacity>
+
+        {/* RIDE HISTORY */}
+
+        <TouchableOpacity
+          style={
+            styles.secondaryButton
+          }
+          onPress={() =>
+            navigation.navigate(
+              'History'
+            )
+          }
+        >
+
+          <Ionicons
+            name="time"
+            size={22}
+            color={
+              COLORS.primary
+            }
+          />
+
+          <Text
+            style={
+              styles.secondaryButtonText
+            }
+          >
+            Ride History
           </Text>
 
         </TouchableOpacity>
@@ -204,8 +554,12 @@ export default function ProfileScreen() {
         {/* LOGOUT */}
 
         <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
+          style={
+            styles.logoutButton
+          }
+          onPress={
+            handleLogout
+          }
         >
 
           <Ionicons
@@ -214,7 +568,11 @@ export default function ProfileScreen() {
             color="#fff"
           />
 
-          <Text style={styles.buttonText}>
+          <Text
+            style={
+              styles.buttonText
+            }
+          >
             Logout
           </Text>
 
@@ -225,15 +583,18 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: '#F4F7FC',
+    backgroundColor:
+      '#F4F7FC',
   },
 
   header: {
-    backgroundColor: COLORS.primary,
+    backgroundColor:
+      COLORS.primary,
     alignItems: 'center',
     paddingTop: 40,
     paddingBottom: 35,
@@ -260,7 +621,8 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: COLORS.primary,
+    backgroundColor:
+      COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
@@ -332,7 +694,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
     height: 55,
     borderRadius: 15,
-    backgroundColor: COLORS.primary,
+    backgroundColor:
+      COLORS.primary,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -346,7 +709,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor:
+      COLORS.primary,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -359,7 +723,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     height: 55,
     borderRadius: 15,
-    backgroundColor: '#E63946',
+    backgroundColor:
+      '#EF4444',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -374,7 +739,8 @@ const styles = StyleSheet.create({
   },
 
   secondaryButtonText: {
-    color: COLORS.primary,
+    color:
+      COLORS.primary,
     fontSize: 17,
     fontWeight: 'bold',
     marginLeft: 8,
