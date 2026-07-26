@@ -1,13 +1,6 @@
+import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
 import {
-  useNavigation,
-} from '@react-navigation/native';
-
-import React, {
-  useState,
-} from 'react';
-
-import {
-  SafeAreaView,
   View,
   Text,
   TextInput,
@@ -19,181 +12,95 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-  Ionicons,
-} from '@expo/vector-icons';
-
+import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
-
-import {
-  usePassenger,
-} from '../context/PassengerContext';
+import { usePassenger } from '../context/PassengerContext';
 
 export default function LoginScreen() {
+  const navigation = useNavigation<any>();
+  const { setPassenger } = usePassenger();
 
-  const navigation =
-    useNavigation<any>();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // GET PASSENGER CONTEXT
-  const {
-    setPassenger,
-  } = usePassenger();
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Login Required', 'Please enter your email and password.');
+      return;
+    }
 
-  const [
-    email,
-    setEmail,
-  ] = useState('');
+    setLoading(true);
 
-  const [
-    password,
-    setPassword,
-  ] = useState('');
-
-  const [
-    showPassword,
-    setShowPassword,
-  ] = useState(false);
-
-  const [
-    rememberMe,
-    setRememberMe,
-  ] = useState(false);
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
-
-  const handleLogin =
-    async () => {
-
-      // BASIC VALIDATION
-
-      if (
-        !email.trim() ||
-        !password.trim()
-      ) {
-
-        Alert.alert(
-          'Login Required',
-          'Please enter your email and password.'
-        );
-
-        return;
+    const getHost = () => {
+      if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+        return window.location.hostname;
       }
-
-      setLoading(true);
-
-      try {
-
-        const response =
-          await fetch(
-            'http://192.168.8.33/passenger_api/login.php',
-            {
-              method: 'POST',
-
-              headers: {
-                'Content-Type':
-                  'application/json',
-              },
-
-              body: JSON.stringify({
-                email:
-                  email.trim(),
-
-                password:
-                  password,
-              }),
-            }
-          );
-
-        const data =
-          await response.json();
-
-        console.log(
-          'LOGIN RESPONSE:',
-          data
-        );
-
-        if (data.success) {
-
-          // SAVE LOGGED-IN PASSENGER
-          // TO PASSENGER CONTEXT
-
-          if (
-            data.passenger
-          ) {
-
-            setPassenger(
-              data.passenger
-            );
-
-            console.log(
-              'PASSENGER SAVED TO CONTEXT:',
-              data.passenger
-            );
-
-          }
-
-          Alert.alert(
-            'Login Successful',
-
-            `Welcome back, ${
-              data.passenger?.full_name ||
-              'Passenger'
-            }!`,
-
-            [
-              {
-                text:
-                  'Continue',
-
-                onPress:
-                  () => {
-
-                    navigation.replace(
-                      'Main'
-                    );
-
-                  },
-              },
-            ]
-          );
-
-        } else {
-
-          Alert.alert(
-            'Login Failed',
-
-            data.message ||
-              'Invalid email or password.'
-          );
-
-        }
-
-      } catch (
-        error
-      ) {
-
-        console.log(
-          'LOGIN ERROR:',
-          error
-        );
-
-        Alert.alert(
-          'Connection Error',
-
-          'Unable to connect to the server. Please make sure XAMPP Apache is running.'
-        );
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
+      return '192.168.254.205';
     };
+
+    const host = getHost();
+    const apiUrls = [
+      `http://${host}:8000/api/v1/passenger/login`,
+      'http://localhost:8000/api/v1/passenger/login',
+      'http://127.0.0.1:8000/api/v1/passenger/login',
+      'http://10.0.2.2:8000/api/v1/passenger/login',
+    ];
+
+    let loggedPassenger = null;
+    let lastErrMsg = '';
+
+    for (const url of apiUrls) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            login: email.trim(),
+            password: password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && (data.success || data.token || data.user)) {
+          loggedPassenger = data.passenger || data.user || {
+            name: 'Passenger',
+            email: email.trim(),
+          };
+          break;
+        } else {
+          lastErrMsg = data.message || 'Invalid passenger credentials.';
+          if (response.status === 401 || response.status === 422) {
+            break;
+          }
+        }
+      } catch (err: any) {
+        lastErrMsg = err.message || 'Server connection error.';
+      }
+    }
+
+    setLoading(false);
+
+    if (loggedPassenger) {
+      setPassenger({
+        id: loggedPassenger.id || 'PSG-101',
+        name: loggedPassenger.name || loggedPassenger.full_name || 'Passenger',
+        email: loggedPassenger.email || email.trim(),
+        phone: loggedPassenger.mobile_number || loggedPassenger.contact_number || '',
+      });
+      navigation.replace('Main');
+    } else {
+      Alert.alert('Login Error', lastErrMsg);
+    }
+  };
 
   return (
 

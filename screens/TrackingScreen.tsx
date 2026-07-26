@@ -118,21 +118,41 @@ export default function TrackingScreen() {
   ========================================
   */
 
+  const [currentStatus, setCurrentStatus] = useState<string>('accepted');
+  const [statusMessage, setStatusMessage] = useState<string>('Driver is en route to your pickup location');
+
   useEffect(() => {
-    const countdown = setInterval(() => {
-      setMinutes(prev => {
-        if (prev <= 1) {
-          clearInterval(countdown);
-          return 1;
+    let intervalId: any = null;
+    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '192.168.254.205';
+
+    async function pollTripStatus() {
+      try {
+        const response = await fetch(`http://${host}:8000/api/v1/passenger/bookings/active`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.booking) {
+          const st = data.booking.status;
+          setCurrentStatus(st);
+          if (st === 'arrived') {
+            setStatusMessage('🔔 DRIVER ARRIVED! Your tricycle is waiting at pickup.');
+          } else if (st === 'in_transit') {
+            setStatusMessage('🚀 TRIP IN PROGRESS: Heading to your destination.');
+          } else if (st === 'completed') {
+            setStatusMessage('🎉 TRIP COMPLETED! Thank you for riding with Trivora.');
+            setTimeout(() => {
+              goToTripSummary();
+            }, 1200);
+          }
         }
+      } catch (e) {
+        console.log('Status poll notice:', e);
+      }
+    }
 
-        return prev - 1;
-      });
-    }, 4000);
-
-    return () => {
-      clearInterval(countdown);
-    };
+    pollTripStatus();
+    intervalId = setInterval(pollTripStatus, 3000);
+    return () => clearInterval(intervalId);
   }, []);
 
   /*
@@ -220,10 +240,10 @@ ${passenger.lng}
 );
 
 L.tileLayer(
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
 {
-maxZoom: 19,
-attribution: '© OpenStreetMap'
+maxZoom: 20,
+attribution: '© Google Maps'
 }
 ).addTo(map);
 
@@ -316,6 +336,12 @@ opacity: 0.8
 
   return (
     <View style={styles.container}>
+
+      {/* REAL-TIME TRIP STATUS BANNER */}
+      <View style={styles.statusBanner}>
+        <Ionicons name="radio" size={18} color="#FFFFFF" />
+        <Text style={styles.statusBannerText}>{statusMessage}</Text>
+      </View>
 
       {/* MAP */}
 
@@ -712,4 +738,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
+  statusBanner: {
+    position: 'absolute',
+    top: 55,
+    left: 20,
+    right: 20,
+    zIndex: 999,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  statusBannerText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
 });
