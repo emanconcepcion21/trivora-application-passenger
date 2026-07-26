@@ -494,10 +494,10 @@ ${location.longitude}
 );
 
 L.tileLayer(
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
 {
-maxZoom: 19,
-attribution: '© OpenStreetMap'
+maxZoom: 20,
+attribution: '© Google Maps'
 }
 ).addTo(map);
 
@@ -508,68 +508,70 @@ ${location.longitude}
 ])
 .addTo(map)
 .bindPopup(
-'Current Location'
+'Current Pickup Location'
 );
+
+var destinationMarker = null;
 
 ${
 selectedPlace
   ? `
-
-var destinationMarker =
-L.marker([
+destinationMarker = L.marker([
 ${selectedPlace.latitude},
 ${selectedPlace.longitude}
-])
+], { draggable: true })
 .addTo(map)
-.bindPopup(
-'Brgy. ${selectedPlace.name}'
-);
+.bindPopup('${selectedPlace.name}');
 
-var routeCoordinates =
-${JSON.stringify(
-  routeCoordinates
-)}
-.map(function(item) {
-
-return [
-item[1],
-item[0]
-];
-
+destinationMarker.on('dragend', function(e) {
+  var pos = e.target.getLatLng();
+  if (window.ReactNativeWebView) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      type: 'PIN_LOCATION',
+      lat: pos.lat,
+      lng: pos.lng
+    }));
+  }
 });
 
-if (
-routeCoordinates.length > 0
-) {
+var routeCoordinates = ${JSON.stringify(routeCoordinates)}.map(function(item) {
+  return [item[1], item[0]];
+});
 
-var route =
-L.polyline(
-routeCoordinates,
-{
-color: '#2563EB',
-weight: 6,
-opacity: 0.9
+if (routeCoordinates.length > 0) {
+  var route = L.polyline(routeCoordinates, {
+    color: '#2563EB',
+    weight: 6,
+    opacity: 0.9
+  }).addTo(map);
+
+  var bounds = route.getBounds();
+  map.fitBounds(bounds, { padding: [50, 50] });
 }
-).addTo(map);
-
-var bounds =
-route.getBounds();
-
-map.fitBounds(
-bounds,
-{
-padding: [
-50,
-50
-]
-}
-);
-
-}
-
 `
   : ''
 }
+
+// Allow passenger to tap anywhere on the map to pin destination
+map.on('click', function(e) {
+  var lat = e.latlng.lat;
+  var lng = e.latlng.lng;
+
+  if (destinationMarker) {
+    destinationMarker.setLatLng(e.latlng);
+  } else {
+    destinationMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+  }
+  destinationMarker.bindPopup('Pinned Destination').openPopup();
+
+  if (window.ReactNativeWebView) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      type: 'PIN_LOCATION',
+      lat: lat,
+      lng: lng
+    }));
+  }
+});
 
 </script>
 
@@ -577,6 +579,23 @@ padding: [
 
 </html>
 `;
+
+  const handleMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data && data.type === 'PIN_LOCATION') {
+        const pinned: Barangay = {
+          id: 'pinned-' + Date.now(),
+          name: `Pinned Location (${data.lat.toFixed(4)}, ${data.lng.toFixed(4)})`,
+          latitude: data.lat,
+          longitude: data.lng,
+        };
+        selectDestination(pinned);
+      }
+    } catch (e) {
+      console.log('WebView Message Error:', e);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -589,6 +608,14 @@ padding: [
       keyboardVerticalOffset={20}
     >
 
+      {/* FLOATING MAP PINNING INSTRUCTION BANNER */}
+      <View style={styles.floatingBanner}>
+        <Ionicons name="location" size={18} color="#FFFFFF" />
+        <Text style={styles.floatingBannerText}>
+          {selectedPlace ? 'Destination Pinned! Tap map to reposition.' : 'Tap anywhere on map to PIN Destination'}
+        </Text>
+      </View>
+
       <WebView
         style={styles.map}
         originWhitelist={['*']}
@@ -597,233 +624,42 @@ padding: [
         }}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        onMessage={handleMessage}
       />
 
-      <View
-        style={
-          styles.bottomCard
-        }
-      >
+      <View style={styles.bottomCard}>
+        <Text style={styles.title}>Book Ride</Text>
 
-        <Text
-          style={styles.title}
-        >
-          Book Ride
-        </Text>
-
-        <View
-          style={
-            styles.searchContainer
-          }
-        >
-
-          <Ionicons
-            name="search"
-            size={22}
-            color={
-              COLORS.primary
-            }
-          />
-
-          <TextInput
-            placeholder="Search barangay in Nasugbu..."
-            placeholderTextColor="#999"
-            value={destination}
-            onChangeText={
-              setDestination
-            }
-            style={styles.input}
-            returnKeyType="search"
-          />
-
-          {destination.length > 0 && (
-            <TouchableOpacity
-              onPress={
-                clearDestination
-              }
-            >
-              <Ionicons
-                name="close-circle"
-                size={22}
-                color="#999"
-              />
-            </TouchableOpacity>
-          )}
-
-        </View>
-
-        {!selectedPlace &&
-          filteredBarangays.length >
-            0 && (
-
-            <FlatList
-              data={
-                filteredBarangays
-              }
-              keyExtractor={(
-                item
-              ) => item.id}
-              keyboardShouldPersistTaps="handled"
-              style={
-                styles.resultList
-              }
-              renderItem={({
-                item,
-              }) => (
-
-                <TouchableOpacity
-                  style={
-                    styles.resultItem
-                  }
-                  onPress={() =>
-                    selectDestination(
-                      item
-                    )
-                  }
-                >
-
-                  <Ionicons
-                    name="location"
-                    size={20}
-                    color={
-                      COLORS.primary
-                    }
-                  />
-
-                  <View
-                    style={
-                      styles.resultContent
-                    }
-                  >
-
-                    <Text
-                      style={
-                        styles.resultTitle
-                      }
-                    >
-                      Brgy. {item.name}
-                    </Text>
-
-                    <Text
-                      style={
-                        styles.resultSubtitle
-                      }
-                    >
-                      Nasugbu, Batangas
-                    </Text>
-
-                  </View>
-
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color="#999"
-                  />
-
-                </TouchableOpacity>
-
-              )}
-            />
-
-          )}
-
-        {!selectedPlace &&
-          destination.length > 0 &&
-          filteredBarangays.length ===
-            0 && (
-
-            <View
-              style={
-                styles.noResult
-              }
-            >
-
-              <Ionicons
-                name="location-outline"
-                size={28}
-                color="#999"
-              />
-
-              <Text
-                style={
-                  styles.noResultText
-                }
-              >
-                No barangay found
-              </Text>
-
-              <Text
-                style={
-                  styles.noResultSubtext
-                }
-              >
-                Try searching another barangay in Nasugbu.
-              </Text>
-
+        {!selectedPlace ? (
+          <TouchableOpacity
+            style={styles.pinHintCard}
+            onPress={() => {
+              // Default pin near center if tapped
+              selectDestination({
+                id: 'pin-default',
+                name: 'Pinned Destination (Bucana / Brgy. 10)',
+                latitude: 14.0725,
+                longitude: 120.6315,
+              });
+            }}
+          >
+            <Ionicons name="location" size={36} color={COLORS.primary} />
+            <View style={{ marginLeft: 12, flex: 1 }}>
+              <Text style={styles.pinHintTitle}>Pin Destination on Map</Text>
+              <Text style={styles.pinHintSub}>Tap any location on the map above to drop your destination pin.</Text>
             </View>
-
-          )}
-
-        {selectedPlace && (
-
+          </TouchableOpacity>
+        ) : (
           <>
-
-            <View
-              style={
-                styles.selectedDestination
-              }
-            >
-
-              <Ionicons
-                name="location"
-                size={20}
-                color={
-                  COLORS.primary
-                }
-              />
-
-              <View
-                style={
-                  styles.selectedContent
-                }
-              >
-
-                <Text
-                  style={
-                    styles.selectedLabel
-                  }
-                >
-                  Destination
-                </Text>
-
-                <Text
-                  style={
-                    styles.selectedText
-                  }
-                  numberOfLines={1}
-                >
-                  Brgy. {
-                    selectedPlace.name
-                  }
-                  , Nasugbu
-                </Text>
-
+            <View style={styles.selectedDestination}>
+              <Ionicons name="location" size={22} color={COLORS.primary} />
+              <View style={styles.selectedContent}>
+                <Text style={styles.selectedTitle}>{selectedPlace.name}</Text>
+                <Text style={styles.selectedSubtitle}>Nasugbu, Batangas</Text>
               </View>
-
-              <TouchableOpacity
-                onPress={
-                  clearDestination
-                }
-              >
-
-                <Ionicons
-                  name="close-circle"
-                  size={22}
-                  color="#999"
-                />
-
+              <TouchableOpacity onPress={clearDestination}>
+                <Ionicons name="close-circle" size={22} color="#999" />
               </TouchableOpacity>
-
             </View>
 
             {routeLoading ? (
@@ -973,21 +809,16 @@ padding: [
                       }
                       onPress={() =>
                         navigation.navigate(
-                          'Booking',
+                          'SearchingDriver',
                           {
-                            destination:
-                              `Brgy. ${selectedPlace.name}, Nasugbu, Batangas`,
-                            distance,
-                            eta,
-                            estimatedFare,
-                            pickupLatitude:
-                              location.latitude,
-                            pickupLongitude:
-                              location.longitude,
-                            destinationLatitude:
-                              selectedPlace.latitude,
-                            destinationLongitude:
-                              selectedPlace.longitude,
+                            pickupName: 'Nasugbu Pickup Point',
+                            pickupLat: location.latitude,
+                            pickupLng: location.longitude,
+                            dropoffName: selectedPlace.name,
+                            dropoffLat: selectedPlace.latitude,
+                            dropoffLng: selectedPlace.longitude,
+                            fareAmount: 45.0,
+                            distanceKm: 2.5,
                           }
                         )
                       }
@@ -1237,4 +1068,50 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
+  floatingBanner: {
+    position: 'absolute',
+    top: 15,
+    left: 15,
+    right: 15,
+    zIndex: 99,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  floatingBannerText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+
+  pinHintCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    borderRadius: 16,
+    padding: 16,
+    marginVertical: 10,
+  },
+  pinHintTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  pinHintSub: {
+    fontSize: 12,
+    color: '#4B5563',
+    marginTop: 2,
+  },
 });

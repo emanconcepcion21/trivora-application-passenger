@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -11,7 +10,9 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
@@ -28,102 +29,86 @@ export default function ProfileScreen() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = async () => {
-
-    // CHECK EMPTY FIELDS
-
-    if (
-      !name.trim() ||
-      !email.trim() ||
-      !phone.trim() ||
-      !password.trim()
-    ) {
-      Alert.alert(
-        'Incomplete Information',
-        'Please fill in all fields.'
-      );
+    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
+      Alert.alert('Incomplete Information', 'Please fill in all fields.');
       return;
     }
 
-    // CHECK PASSWORD LENGTH
-
     if (password.length < 6) {
-      Alert.alert(
-        'Invalid Password',
-        'Password must be at least 6 characters.'
-      );
+      Alert.alert('Invalid Password', 'Password must be at least 6 characters.');
       return;
     }
 
     setLoading(true);
 
-    try {
+    const getHost = () => {
+      if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+        return window.location.hostname;
+      }
+      return '192.168.254.205';
+    };
 
-      const response = await fetch(
-        'http://192.168.8.33/passenger_api/register.php',
-        {
+    const host = getHost();
+    const apiUrls = [
+      `http://${host}:8000/api/v1/passenger/register`,
+      'http://localhost:8000/api/v1/passenger/register',
+      'http://127.0.0.1:8000/api/v1/passenger/register',
+      'http://10.0.2.2:8000/api/v1/passenger/register',
+    ];
+
+    let successMsg = null;
+    let lastErrorMsg = '';
+
+    for (const url of apiUrls) {
+      try {
+        const response = await fetch(url, {
           method: 'POST',
-
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
-
           body: JSON.stringify({
-            full_name: name.trim(),
+            name: name.trim(),
             email: email.trim(),
-            phone: phone.trim(),
+            mobile_number: phone.trim(),
             password: password,
           }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && (data.token || data.message || data.user)) {
+          successMsg = data.message || 'Passenger registered successfully.';
+          break;
+        } else {
+          lastErrorMsg = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Registration failed.');
+          if (response.status === 422 || response.status === 400) {
+            // Validation error, break immediately to show validation message
+            break;
+          }
         }
-      );
-
-      const data = await response.json();
-
-      console.log(
-        'REGISTER RESPONSE:',
-        data
-      );
-
-      if (data.success) {
-
-        Alert.alert(
-          'Registration Successful',
-          data.message ||
-            'Passenger registered successfully.',
-          [
-            {
-              text: 'OK',
-              onPress: () =>
-                navigation.replace('Login'),
-            },
-          ]
-        );
-
-      } else {
-
-        Alert.alert(
-          'Registration Failed',
-          data.message ||
-            'Unable to register passenger.'
-        );
-
+      } catch (err: any) {
+        lastErrorMsg = err.message || 'Server connection error.';
       }
+    }
 
-    } catch (error) {
+    setLoading(false);
 
-      console.log(
-        'REGISTER ERROR:',
-        error
-      );
-
-      Alert.alert(
-        'Connection Error',
-        'Unable to connect to the server. Please make sure XAMPP Apache and MySQL are running.'
-      );
-
-    } finally {
-
-      setLoading(false);
-
+    if (successMsg) {
+      if (Platform.OS === 'web') {
+        alert('Registration Successful 🎉\nYour passenger account has been saved in the database.');
+        navigation.replace('Login');
+      } else {
+        Alert.alert('Registration Successful 🎉', 'Your passenger account has been saved in the database.', [
+          { text: 'Log In', onPress: () => navigation.replace('Login') },
+        ]);
+      }
+    } else {
+      if (Platform.OS === 'web') {
+        alert(`Registration Notice: ${lastErrorMsg}`);
+      } else {
+        Alert.alert('Registration Notice', lastErrorMsg);
+      }
     }
   };
 
