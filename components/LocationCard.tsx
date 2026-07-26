@@ -1,17 +1,46 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
 } from 'react-native';
-
+import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
 
 export default function LocationCard() {
+  const [addressName, setAddressName] = useState('Nasugbu, Batangas');
+
+  useEffect(() => {
+    async function fetchAddress() {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          if (loc && loc.coords) {
+            const results = await Location.reverseGeocodeAsync({
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+            });
+            if (results && results.length > 0) {
+              const item = results[0];
+              const street = item.street || item.name || item.streetNumber;
+              const city = item.subregion || item.city || item.district || 'Nasugbu';
+              if (street && city && !street.includes('+')) {
+                setAddressName(`${street}, ${city}`);
+              } else if (item.formattedAddress) {
+                setAddressName(item.formattedAddress.split(',')[0]);
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    fetchAddress();
+  }, []);
+
   return (
     <View style={styles.container}>
-
       <Ionicons
         name="location"
         size={30}
@@ -19,17 +48,9 @@ export default function LocationCard() {
       />
 
       <View style={styles.textContainer}>
-
-        <Text style={styles.label}>
-          Current Location
-        </Text>
-
-        <Text style={styles.location}>
-          Nasugbu, Batangas
-        </Text>
-
+        <Text style={styles.label}>Current Location</Text>
+        <Text style={styles.location}>{addressName}</Text>
       </View>
-
     </View>
   );
 }

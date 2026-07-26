@@ -96,10 +96,9 @@ export default function ProfileScreen() {
 
     if (successMsg) {
       if (Platform.OS === 'web') {
-        alert('Registration Successful 🎉\nYour passenger account has been saved in the database.');
-        navigation.replace('Login');
+        alert('Registration Successful\nYour passenger account has been saved in the database.');
       } else {
-        Alert.alert('Registration Successful 🎉', 'Your passenger account has been saved in the database.', [
+        Alert.alert('Registration Successful', 'Your passenger account has been saved in the database.', [
           { text: 'Log In', onPress: () => navigation.replace('Login') },
         ]);
       }

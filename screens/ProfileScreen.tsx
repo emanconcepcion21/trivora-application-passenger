@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -12,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,26 +46,46 @@ export default function ProfileScreen() {
 
   const [loading, setLoading] = useState(false);
 
-  // LOAD PASSENGER DATA
-  // WHEN PROFILE SCREEN OPENS
+  const getHost = () => {
+    if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+      return window.location.hostname;
+    }
+    return '192.168.254.205';
+  };
+
+  // LOAD PASSENGER DATA WHEN PROFILE SCREEN OPENS
   useEffect(() => {
-
-    if (passenger) {
-
-      setName(
-        passenger.full_name || ''
-      );
-
-      setEmail(
-        passenger.email || ''
-      );
-
-      setPhone(
-        passenger.phone || ''
-      );
-
+    async function loadProfileData() {
+      if (passenger && (passenger.full_name || passenger.email)) {
+        setName(passenger.full_name || (passenger as any).name || 'Juan Dela Cruz');
+        setEmail(passenger.email || 'passenger@trivora.ph');
+        setPhone(passenger.phone || (passenger as any).mobile_number || '09171234567');
+      } else {
+        try {
+          const host = getHost();
+          const res = await fetch(`http://${host}:8000/api/v1/passenger/bookings/active`, {
+            headers: { 'Accept': 'application/json' },
+          });
+          const data = await res.json();
+          if (data.booking?.passenger) {
+            const p = data.booking.passenger;
+            setName(p.user?.name || p.full_name || 'Juan Dela Cruz');
+            setEmail(p.user?.email || p.email || 'passenger@trivora.ph');
+            setPhone(p.mobile_number || p.phone || '09171234567');
+          } else {
+            setName('Juan Dela Cruz');
+            setEmail('passenger@trivora.ph');
+            setPhone('09171234567');
+          }
+        } catch (e) {
+          setName('Juan Dela Cruz');
+          setEmail('passenger@trivora.ph');
+          setPhone('09171234567');
+        }
+      }
     }
 
+    loadProfileData();
   }, [passenger]);
 
   // SAVE PROFILE

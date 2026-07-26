@@ -17,6 +17,7 @@ import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import COLORS from '../theme/colors';
 
 const ORS_API_KEY =
@@ -176,8 +177,40 @@ const NASUGBU_BARANGAYS: Barangay[] = [
   },
 ];
 
+async function reverseGeocodeAddress(latitude: number, longitude: number): Promise<string> {
+  try {
+    const results = await Location.reverseGeocodeAsync({ latitude, longitude });
+    if (results && results.length > 0) {
+      const item = results[0];
+      const name = item.name || item.street || item.streetNumber;
+      const district = item.subregion || item.district || item.city || item.region;
+      if (name && district && !name.includes('+')) return `${name}, ${district}`;
+      if (name && !name.includes('+')) return name;
+      if (item.formattedAddress) return item.formattedAddress;
+    }
+  } catch (e) {}
+
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+      headers: { 'User-Agent': 'TrivoraMobile/1.0' },
+    });
+    const data = await res.json();
+    if (data && data.address) {
+      const a = data.address;
+      const place = a.amenity || a.building || a.shop || a.road || a.suburb || a.village || a.neighbourhood || a.quarter;
+      const city = a.city || a.town || a.municipality || 'Nasugbu';
+      if (place && city) return `${place}, ${city}`;
+      if (place) return place;
+      if (data.display_name) return data.display_name.split(',')[0];
+    }
+  } catch (e) {}
+
+  return `Brgy. Poblacion, Nasugbu`;
+}
+
 export default function MapScreen() {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
 
@@ -186,6 +219,7 @@ export default function MapScreen() {
     longitude: 120.622139,
   });
 
+  const [pickupAddressName, setPickupAddressName] = useState('Nasugbu, Batangas');
   const [destination, setDestination] = useState('');
 
   const [selectedPlace, setSelectedPlace] =
@@ -229,10 +263,17 @@ export default function MapScreen() {
           accuracy: Location.Accuracy.High,
         });
 
+      const lat = current.coords.latitude;
+      const lng = current.coords.longitude;
+
       setLocation({
-        latitude: current.coords.latitude,
-        longitude: current.coords.longitude,
+        latitude: lat,
+        longitude: lng,
       });
+
+      // Reverse geocode live GPS position
+      const address = await reverseGeocodeAddress(lat, lng);
+      setPickupAddressName(address);
 
       setLoading(false);
     } catch (error) {
@@ -580,13 +621,14 @@ map.on('click', function(e) {
 </html>
 `;
 
-  const handleMessage = (event: any) => {
+  const handleMessage = async (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data && data.type === 'PIN_LOCATION') {
+        const resolvedAddress = await reverseGeocodeAddress(data.lat, data.lng);
         const pinned: Barangay = {
           id: 'pinned-' + Date.now(),
-          name: `Pinned Location (${data.lat.toFixed(4)}, ${data.lng.toFixed(4)})`,
+          name: resolvedAddress,
           latitude: data.lat,
           longitude: data.lng,
         };
@@ -609,7 +651,7 @@ map.on('click', function(e) {
     >
 
       {/* FLOATING MAP PINNING INSTRUCTION BANNER */}
-      <View style={styles.floatingBanner}>
+      <View style={[styles.floatingBanner, { top: Math.max(insets.top + 12, 48) }]}>
         <Ionicons name="location" size={18} color="#FFFFFF" />
         <Text style={styles.floatingBannerText}>
           {selectedPlace ? 'Destination Pinned! Tap map to reposition.' : 'Tap anywhere on map to PIN Destination'}
@@ -804,24 +846,22 @@ map.on('click', function(e) {
                   eta && (
 
                     <TouchableOpacity
-                      style={
-                        styles.button
-                      }
-                      onPress={() =>
-                        navigation.navigate(
-                          'SearchingDriver',
-                          {
-                            pickupName: 'Nasugbu Pickup Point',
-                            pickupLat: location.latitude,
-                            pickupLng: location.longitude,
-                            dropoffName: selectedPlace.name,
-                            dropoffLat: selectedPlace.latitude,
-                            dropoffLng: selectedPlace.longitude,
-                            fareAmount: 45.0,
-                            distanceKm: 2.5,
-                          }
-                        )
-                      }
+                      style={styles.button}
+                      onPress={() => {
+                        const numericFare = parseFloat(estimatedFare.replace('₱', '')) || 45.0;
+                        const numericDistance = parseFloat(distance.replace(' km', '')) || 2.5;
+
+                        navigation.navigate('SearchingDriver', {
+                          pickupName: pickupAddressName || 'Brgy. Poblacion, Nasugbu',
+                          pickupLat: location.latitude,
+                          pickupLng: location.longitude,
+                          dropoffName: selectedPlace?.name || 'Brgy. Bucana, Nasugbu',
+                          dropoffLat: selectedPlace?.latitude || 14.0701,
+                          dropoffLng: selectedPlace?.longitude || 120.6339,
+                          fareAmount: numericFare,
+                          distanceKm: numericDistance,
+                        });
+                      }}
                     >
 
                       {/* TRICYCLE ICON */}
