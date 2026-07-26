@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-
+import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
   SectionList,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Ionicons } from '@expo/vector-icons';
 
@@ -61,43 +61,84 @@ const groupedRides = [
 ];
 
 export default function RideHistoryScreen() {
+  const [ridesList, setRidesList] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const getHost = () => {
+    if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+      return window.location.hostname;
+    }
+    return '192.168.254.205';
+  };
+
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        const host = getHost();
+        const res = await fetch(`http://${host}:8000/api/v1/passenger/bookings/history`, {
+          headers: { 'Accept': 'application/json' },
+        });
+        const data = await res.json();
+        const rawBookings = data.bookings || data.history || [];
+        if (rawBookings.length > 0) {
+          const parsed = rawBookings.map((b: any) => ({
+            id: b.id.toString(),
+            bookingCode: b.booking_code,
+            date: new Date(b.created_at || b.requested_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }),
+            pickup: b.pickup_name || 'Pickup Point',
+            destination: b.dropoff_name || 'Destination Point',
+            fare: `₱${parseFloat(b.fare_amount || 0).toFixed(2)}`,
+            driver: b.driver?.user?.name || 'Assigned Driver',
+            rating: b.driver?.rating || '5.0',
+            duration: b.estimated_duration_mins ? `${b.estimated_duration_mins} mins` : '10 mins',
+            status: (b.status || 'completed').toUpperCase(),
+          }));
+          setRidesList(parsed);
+        }
+      } catch (e) {
+        console.log('[Passenger History] Poll notice:', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchHistory();
+  }, []);
+
   const toggleExpand = (id: string) => {
-    setExpandedId(
-      expandedId === id
-        ? null
-        : id
-    );
+    setExpandedId(expandedId === id ? null : id);
   };
 
   return (
-    <SafeAreaView
-      style={styles.container}
-    >
+    <View style={styles.container}>
+      {/* PRIMARY BLUE HEADER */}
+      <View style={styles.header}>
+        <Text style={styles.headerSubtitle}>Passenger Portal</Text>
+        <Text style={styles.headerTitle}>Ride History</Text>
+      </View>
 
-      <Text
-        style={styles.title}
-      >
-        Ride History
-      </Text>
-
-      <SectionList
-        sections={groupedRides}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-
-        renderSectionHeader={({
-          section: { title },
-        }) => (
-          <Text
-            style={styles.sectionHeader}
-          >
-            {title}
-          </Text>
-        )}
-
-        renderItem={({ item }) => {
+      {loading ? (
+        <View style={styles.loadingWrapper}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading trip history...</Text>
+        </View>
+      ) : ridesList.length === 0 ? (
+        <View style={styles.emptyWrapper}>
+          <Ionicons name="receipt-outline" size={48} color={COLORS.gray} />
+          <Text style={styles.emptyTitle}>No Ride History Yet</Text>
+          <Text style={styles.emptySub}>Your completed tricycle trips will appear here.</Text>
+        </View>
+      ) : (
+        <SectionList
+          sections={[{ title: 'Recent Activity', data: ridesList }]}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 20 }}
+          renderSectionHeader={({ section: { title } }) => (
+            <Text style={styles.sectionHeader}>{title}</Text>
+          )}
+          renderItem={({ item }) => {
 
           const isExpanded =
             expandedId === item.id;
@@ -356,10 +397,9 @@ export default function RideHistoryScreen() {
           );
 
         }}
-
       />
-
-    </SafeAreaView>
+      )}
+    </View>
   );
 }
 
@@ -367,18 +407,28 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor:
-      '#F5F7FB',
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    backgroundColor: '#F5F7FB',
   },
 
-  title: {
+  header: {
+    backgroundColor: COLORS.primary,
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 25,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: 15,
+  },
+  headerSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
     fontSize: 28,
     fontWeight: 'bold',
-    color:
-      COLORS.primary,
-    marginBottom: 20,
+    marginTop: 4,
   },
 
   sectionHeader: {
@@ -538,4 +588,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
+  loadingWrapper: {
+    paddingTop: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: COLORS.gray,
+    fontWeight: '500',
+  },
+  emptyWrapper: {
+    paddingTop: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.black,
+    marginTop: 12,
+  },
+  emptySub: {
+    fontSize: 13,
+    color: COLORS.gray,
+    textAlign: 'center',
+    marginTop: 4,
+  },
 });

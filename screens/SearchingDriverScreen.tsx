@@ -113,19 +113,18 @@ export default function SearchingDriverScreen() {
             setTodaName(data.booking.toda_zone.name);
           }
 
-          if (data.booking.status === 'accepted') {
+          if (['accepted', 'arrived', 'in_transit'].includes(data.booking.status)) {
             clearInterval(intervalId);
-
-            if (Platform.OS === 'web') {
-              alert(`🎉 RIDE ACCEPTED!\nDriver ${data.booking.driver?.user?.name || 'Pedro Ramos'} has accepted your booking!`);
-              navigation.replace('Tracking');
-            } else {
-              Alert.alert(
-                '🎉 Ride Accepted!',
-                `Driver ${data.booking.driver?.user?.name || 'Pedro Ramos'} has accepted your booking request.`,
-                [{ text: 'Track Driver', onPress: () => navigation.replace('Tracking') }]
-              );
-            }
+            navigation.replace('Tracking', {
+              booking: data.booking,
+              destination: data.booking.dropoff_name,
+              pickupLatitude: parseFloat(data.booking.pickup_lat) || 14.0637,
+              pickupLongitude: parseFloat(data.booking.pickup_lng) || 120.6274,
+              destinationLatitude: parseFloat(data.booking.dropoff_lat) || 14.0701,
+              destinationLongitude: parseFloat(data.booking.dropoff_lng) || 120.6339,
+              estimatedFare: `₱${parseFloat(data.booking.fare_amount).toFixed(2)}`,
+              distance: `${data.booking.distance_km} km`,
+            });
           }
         }
       } catch (e) {
@@ -168,7 +167,7 @@ export default function SearchingDriverScreen() {
         <View style={styles.badge}>
           <Text style={styles.badgeText}>SEARCHING DRIVER</Text>
         </View>
-        <Text style={styles.todaHeader}>📍 Dispatched to {todaName}</Text>
+        <Text style={styles.todaHeader}>Dispatched to {todaName}</Text>
       </View>
 
       {/* RADAR ANIMATION CONTAINER */}
@@ -189,13 +188,13 @@ export default function SearchingDriverScreen() {
       {/* TRIP SUMMARY CARD */}
       <View style={styles.tripCard}>
         <View style={styles.locRow}>
-          <Ionicons name="radio-button-on" size={18} color="#10B981" />
-          <Text style={styles.locText} numberOfLines={1}>{pickupName}</Text>
+          <Ionicons name="radio-button-on" size={18} color="#10B981" style={{ marginTop: 2 }} />
+          <Text style={styles.locText}>{pickupName}</Text>
         </View>
         <View style={styles.connector} />
         <View style={styles.locRow}>
-          <Ionicons name="location" size={18} color="#EF4444" />
-          <Text style={styles.locText} numberOfLines={1}>{dropoffName}</Text>
+          <Ionicons name="location" size={18} color="#EF4444" style={{ marginTop: 2 }} />
+          <Text style={styles.locText}>{dropoffName}</Text>
         </View>
 
         <View style={styles.divider} />
@@ -303,7 +302,7 @@ const styles = StyleSheet.create({
   },
   locRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   locText: {
     fontSize: 14,
@@ -311,6 +310,9 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     marginLeft: 10,
     flex: 1,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    lineHeight: 20,
   },
   connector: {
     width: 2,
