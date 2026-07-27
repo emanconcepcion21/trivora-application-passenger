@@ -9,8 +9,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
+import { usePassenger } from '../context/PassengerContext';
 
 export default function NotificationScreen() {
+  const { passenger } = usePassenger();
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -18,7 +20,7 @@ export default function NotificationScreen() {
     if (typeof window !== 'undefined' && window.location && window.location.hostname) {
       return window.location.hostname;
     }
-    return '192.168.254.205';
+    return '192.168.254.204';
   };
 
   useEffect(() => {
@@ -26,10 +28,12 @@ export default function NotificationScreen() {
       try {
         const host = getHost();
         const items: any[] = [];
+        const userId = passenger ? (passenger.id || passenger.user_id) : '';
+        const userParam = userId ? `?user_id=${userId}` : '';
 
-        // 1. Fetch Active Booking Notifications
+        // 1. Fetch Active Booking Notifications for logged-in user
         try {
-          const activeRes = await fetch(`http://${host}:8000/api/v1/passenger/bookings/active`, {
+          const activeRes = await fetch(`http://${host}:8000/api/v1/passenger/bookings/active${userParam}`, {
             headers: { 'Accept': 'application/json' },
           });
           const activeData = await activeRes.json();
@@ -74,9 +78,9 @@ export default function NotificationScreen() {
           }
         } catch (err) {}
 
-        // 2. Fetch Completed & History Booking Notifications
+        // 2. Fetch Completed & History Booking Notifications for logged-in user
         try {
-          const historyRes = await fetch(`http://${host}:8000/api/v1/passenger/bookings/history`, {
+          const historyRes = await fetch(`http://${host}:8000/api/v1/passenger/bookings/history${userParam}`, {
             headers: { 'Accept': 'application/json' },
           });
           const historyData = await historyRes.json();
@@ -135,7 +139,7 @@ export default function NotificationScreen() {
     }
 
     fetchNotifications();
-  }, []);
+  }, [passenger]);
 
   return (
     <View style={styles.container}>
@@ -152,9 +156,11 @@ export default function NotificationScreen() {
         </View>
       ) : notificationsList.length === 0 ? (
         <View style={styles.emptyWrapper}>
-          <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray} />
-          <Text style={styles.emptyTitle}>No Notifications</Text>
-          <Text style={styles.emptySub}>You have no unread notifications at this time.</Text>
+          <View style={styles.emptyIconBadge}>
+            <Ionicons name="notifications-off-outline" size={42} color={COLORS.primary} />
+          </View>
+          <Text style={styles.emptyTitle}>No Unread Notifications</Text>
+          <Text style={styles.emptySub}>You're all caught up! Live ride updates, TODA announcements, and receipts will appear here.</Text>
         </View>
       ) : (
         <FlatList
@@ -280,21 +286,31 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   emptyWrapper: {
-    paddingTop: 80,
+    paddingTop: 60,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 30,
+  },
+  emptyIconBadge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#EEF2FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.black,
-    marginTop: 12,
+    marginTop: 4,
   },
   emptySub: {
     fontSize: 13,
     color: COLORS.gray,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 6,
+    lineHeight: 18,
   },
 });

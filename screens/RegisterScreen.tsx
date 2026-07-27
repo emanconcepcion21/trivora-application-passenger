@@ -27,69 +27,61 @@ export default function ProfileScreen() {
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [regError, setRegError] = useState('');
 
   const handleRegister = async () => {
+    setRegError('');
     if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
-      Alert.alert('Incomplete Information', 'Please fill in all fields.');
+      setRegError('Please fill in all required fields.');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Invalid Password', 'Password must be at least 6 characters.');
+      setRegError('Password must be at least 6 characters.');
       return;
     }
 
     setLoading(true);
 
-    const getHost = () => {
-      if (typeof window !== 'undefined' && window.location && window.location.hostname) {
-        return window.location.hostname;
-      }
-      return '192.168.254.205';
-    };
-
-    const host = getHost();
-    const apiUrls = [
-      `http://${host}:8000/api/v1/passenger/register`,
-      'http://localhost:8000/api/v1/passenger/register',
-      'http://127.0.0.1:8000/api/v1/passenger/register',
-      'http://10.0.2.2:8000/api/v1/passenger/register',
-    ];
+    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '192.168.254.204';
+    const apiUrl = `http://${host}:8000/api/v1/passenger/register`;
+    const REQUEST_TIMEOUT_MS = 2000; // faster failover
 
     let successMsg = null;
     let lastErrorMsg = '';
 
-    for (const url of apiUrls) {
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({
-            name: name.trim(),
-            email: email.trim(),
-            mobile_number: phone.trim(),
-            password: password,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok && (data.token || data.message || data.user)) {
-          successMsg = data.message || 'Passenger registered successfully.';
-          break;
+    // Single attempt using AbortController
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          mobile_number: phone.trim(),
+          password: password,
+        }),
+      });
+      clearTimeout(timeout);
+      const data = await response.json();
+      if (response.ok && (data.token || data.message || data.user)) {
+        successMsg = data.message || 'Passenger registered successfully.';
+      } else {
+        if (data.errors) {
+          lastErrorMsg = Object.values(data.errors).flat().join(', ');
         } else {
-          lastErrorMsg = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Registration failed.');
-          if (response.status === 422 || response.status === 400) {
-            // Validation error, break immediately to show validation message
-            break;
-          }
+          lastErrorMsg = data.message || 'Registration failed.';
         }
-      } catch (err: any) {
-        lastErrorMsg = err.message || 'Server connection error.';
       }
+    } catch (err: any) {
+      clearTimeout(timeout);
+      lastErrorMsg = err.name === 'AbortError' ? 'Request timed out. Please check your network.' : err.message || 'Server connection error.';
     }
 
     setLoading(false);
@@ -103,11 +95,8 @@ export default function ProfileScreen() {
         ]);
       }
     } else {
-      if (Platform.OS === 'web') {
-        alert(`Registration Notice: ${lastErrorMsg}`);
-      } else {
-        Alert.alert('Registration Notice', lastErrorMsg);
-      }
+      // Show the exact error returned by the backend (e.g., email already taken)
+      setRegError(lastErrorMsg || 'Registration failed. Please try again.');
     }
   };
 
@@ -159,6 +148,14 @@ export default function ProfileScreen() {
         {/* REGISTER CARD */}
 
         <View style={styles.card}>
+
+          {/* ERROR ALERT BANNER */}
+          {regError ? (
+            <View style={styles.authErrorCard}>
+              <Ionicons name="alert-circle" size={20} color={COLORS.danger} style={{ marginRight: 8 }} />
+              <Text style={styles.authErrorText}>{regError}</Text>
+            </View>
+          ) : null}
 
           {/* FULL NAME */}
 
@@ -321,6 +318,23 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  authErrorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  authErrorText: {
+    color: COLORS.danger,
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+  },
 
   container: {
     flex: 1,

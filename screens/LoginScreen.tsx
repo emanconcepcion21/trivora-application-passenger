@@ -24,13 +24,40 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [authError, setAuthError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const validateEmail = (val: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(val.trim());
+  };
+
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Login Required', 'Please enter your email and password.');
+    let hasError = false;
+    setEmailError('');
+    setPasswordError('');
+    setAuthError('');
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setEmailError('Email address is required.');
+      hasError = true;
+    } else if (!validateEmail(trimmedEmail)) {
+      setEmailError('Please enter a valid email address.');
+      hasError = true;
+    }
+
+    if (!password.trim()) {
+      setPasswordError('Password is required.');
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -40,12 +67,14 @@ export default function LoginScreen() {
       if (typeof window !== 'undefined' && window.location && window.location.hostname) {
         return window.location.hostname;
       }
-      return '192.168.254.205';
+      return '192.168.254.204';
     };
 
     const host = getHost();
     const apiUrls = [
       `http://${host}:8000/api/v1/passenger/login`,
+      'http://192.168.254.204:8000/api/v1/passenger/login',
+      'http://192.168.254.205:8000/api/v1/passenger/login',
       'http://localhost:8000/api/v1/passenger/login',
       'http://127.0.0.1:8000/api/v1/passenger/login',
       'http://10.0.2.2:8000/api/v1/passenger/login',
@@ -63,7 +92,7 @@ export default function LoginScreen() {
             'Accept': 'application/json',
           },
           body: JSON.stringify({
-            login: email.trim(),
+            login: trimmedEmail,
             password: password,
           }),
         });
@@ -73,12 +102,12 @@ export default function LoginScreen() {
         if (response.ok && (data.success || data.token || data.user)) {
           loggedPassenger = data.passenger || data.user || {
             name: 'Passenger',
-            email: email.trim(),
+            email: trimmedEmail,
           };
           break;
         } else {
-          lastErrMsg = data.message || 'Invalid passenger credentials.';
-          if (response.status === 401 || response.status === 422) {
+          lastErrMsg = data.message || 'Invalid email or password.';
+          if (response.status === 401 || response.status === 403 || response.status === 422) {
             break;
           }
         }
@@ -93,12 +122,12 @@ export default function LoginScreen() {
       setPassenger({
         id: loggedPassenger.id || 'PSG-101',
         name: loggedPassenger.name || loggedPassenger.full_name || 'Passenger',
-        email: loggedPassenger.email || email.trim(),
+        email: loggedPassenger.email || trimmedEmail,
         phone: loggedPassenger.mobile_number || loggedPassenger.contact_number || '',
       });
       navigation.replace('Main');
     } else {
-      Alert.alert('Login Error', lastErrMsg);
+      setAuthError(lastErrMsg || 'Invalid email or password.');
     }
   };
 
@@ -172,6 +201,14 @@ export default function LoginScreen() {
           }
         >
 
+          {/* AUTHENTICATION ERROR BANNER */}
+          {!!authError && (
+            <View style={styles.authErrorCard}>
+              <Ionicons name="alert-circle" size={20} color={COLORS.danger} style={{ marginRight: 8 }} />
+              <Text style={styles.authErrorText}>{authError}</Text>
+            </View>
+          )}
+
           {/* EMAIL */}
 
           <Text
@@ -183,16 +220,17 @@ export default function LoginScreen() {
           </Text>
 
           <View
-            style={
-              styles.inputContainer
-            }
+            style={[
+              styles.inputContainer,
+              !!emailError && styles.inputError,
+            ]}
           >
 
             <Ionicons
               name="mail-outline"
               size={22}
               color={
-                COLORS.gray
+                emailError ? COLORS.danger : COLORS.gray
               }
             />
 
@@ -205,14 +243,16 @@ export default function LoginScreen() {
               value={
                 email
               }
-              onChangeText={
-                setEmail
-              }
+              onChangeText={(text) => {
+                setEmail(text);
+                if (emailError) setEmailError('');
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
 
           </View>
+          {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
 
           {/* PASSWORD */}
 
@@ -225,16 +265,17 @@ export default function LoginScreen() {
           </Text>
 
           <View
-            style={
-              styles.inputContainer
-            }
+            style={[
+              styles.inputContainer,
+              !!passwordError && styles.inputError,
+            ]}
           >
 
             <Ionicons
               name="lock-closed-outline"
               size={22}
               color={
-                COLORS.gray
+                passwordError ? COLORS.danger : COLORS.gray
               }
             />
 
@@ -250,9 +291,10 @@ export default function LoginScreen() {
               value={
                 password
               }
-              onChangeText={
-                setPassword
-              }
+              onChangeText={(text) => {
+                setPassword(text);
+                if (passwordError) setPasswordError('');
+              }}
             />
 
             <TouchableOpacity
@@ -279,6 +321,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
           </View>
+          {!!passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
 
           {/* OPTIONS */}
 
@@ -529,6 +572,38 @@ const styles =
       marginLeft: 10,
       color:
         COLORS.black,
+    },
+
+    inputError: {
+      borderColor: COLORS.danger,
+      borderWidth: 1.5,
+    },
+
+    authErrorCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#FEF2F2',
+      borderWidth: 1,
+      borderColor: '#FCA5A5',
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      marginBottom: 16,
+    },
+
+    authErrorText: {
+      flex: 1,
+      color: COLORS.danger,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+
+    errorText: {
+      color: COLORS.danger,
+      fontSize: 12,
+      marginTop: 4,
+      marginLeft: 4,
+      fontWeight: '600',
     },
 
     options: {

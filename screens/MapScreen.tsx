@@ -182,11 +182,18 @@ async function reverseGeocodeAddress(latitude: number, longitude: number): Promi
     const results = await Location.reverseGeocodeAsync({ latitude, longitude });
     if (results && results.length > 0) {
       const item = results[0];
-      const name = item.name || item.street || item.streetNumber;
-      const district = item.subregion || item.district || item.city || item.region;
-      if (name && district && !name.includes('+')) return `${name}, ${district}`;
-      if (name && !name.includes('+')) return name;
-      if (item.formattedAddress) return item.formattedAddress;
+      const isValidName = (str?: string | null) => str && !/^\d+$/.test(str.trim()) && !str.includes('+');
+
+      const streetNumber = isValidName(item.streetNumber) ? item.streetNumber!.trim() : null;
+      const streetName = isValidName(item.street) ? item.street!.trim() : null;
+      const fullStreet = streetName ? (streetNumber ? `${streetNumber} ${streetName}` : streetName) : null;
+
+      const name = isValidName(item.name) ? item.name!.trim() : null;
+      const district = isValidName(item.district) ? item.district!.trim() : null;
+      const city = isValidName(item.city) ? item.city!.trim() : 'Nasugbu';
+
+      const mainPlace = fullStreet || name || district;
+      if (mainPlace) return `${mainPlace}, ${city}`;
     }
   } catch (e) {}
 
@@ -200,7 +207,7 @@ async function reverseGeocodeAddress(latitude: number, longitude: number): Promi
       const place = a.amenity || a.building || a.shop || a.road || a.suburb || a.village || a.neighbourhood || a.quarter;
       const city = a.city || a.town || a.municipality || 'Nasugbu';
       if (place && city) return `${place}, ${city}`;
-      if (place) return place;
+      if (place) return `${place}, Nasugbu`;
       if (data.display_name) return data.display_name.split(',')[0];
     }
   } catch (e) {}
@@ -239,57 +246,59 @@ export default function MapScreen() {
     useState(false);
 
   useEffect(() => {
-    getCurrentLocation();
-  }, []);
+    let watchSub: Location.LocationSubscription | null = null;
 
-  async function getCurrentLocation() {
-    try {
-      const { status } =
-        await Location.requestForegroundPermissionsAsync();
+    async function startContinuousLocationTracking() {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission Denied', 'Location permission is required to use the map.');
+          setLoading(false);
+          return;
+        }
 
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Denied',
-          'Location permission is required to use the map.'
-        );
+        const current = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Highest,
+        });
+
+        if (current && current.coords) {
+          const lat = current.coords.latitude;
+          const lng = current.coords.longitude;
+          setLocation({ latitude: lat, longitude: lng });
+          reverseGeocodeAddress(lat, lng).then((addr) => setPickupAddressName(addr));
+        }
 
         setLoading(false);
 
-        return;
+        // Continuous real-time GPS position watcher
+        watchSub = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.Highest,
+            timeInterval: 3000,
+            distanceInterval: 3,
+          },
+          (newLoc) => {
+            if (newLoc && newLoc.coords) {
+              const newLat = newLoc.coords.latitude;
+              const newLng = newLoc.coords.longitude;
+              setLocation({ latitude: newLat, longitude: newLng });
+            }
+          }
+        );
+      } catch (error) {
+        console.log('Location Error:', error);
+        setLoading(false);
       }
-
-      const current =
-        await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-
-      const lat = current.coords.latitude;
-      const lng = current.coords.longitude;
-
-      setLocation({
-        latitude: lat,
-        longitude: lng,
-      });
-
-      // Reverse geocode live GPS position
-      const address = await reverseGeocodeAddress(lat, lng);
-      setPickupAddressName(address);
-
-      setLoading(false);
-    } catch (error) {
-      console.log(
-        'Location Error:',
-        error
-      );
-
-      Alert.alert(
-        'Location Error',
-        'Unable to get your current location.'
-      );
-
-      setLoading(false);
     }
-  }
+
+    startContinuousLocationTracking();
+
+    return () => {
+      if (watchSub) {
+        watchSub.remove();
+      }
+    };
+  }, []);
 
   const filteredBarangays = useMemo(() => {
     const searchText =

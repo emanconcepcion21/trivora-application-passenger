@@ -29,6 +29,8 @@ export default function TripSummaryScreen() {
   */
 
   const {
+    bookingId = null,
+    booking = null,
     destination = 'No destination',
     distance = '0 km',
     eta = '0 mins',
@@ -47,6 +49,8 @@ export default function TripSummaryScreen() {
     navigation.replace(
       'RateDriver',
       {
+        bookingId: bookingId || (booking ? booking.id : null),
+        booking,
         destination,
         distance,
         eta,

@@ -8,44 +8,57 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
+import { usePassenger } from '../context/PassengerContext';
 
 export default function RecentTripCard() {
   const navigation = useNavigation<any>();
+  const { passenger } = usePassenger();
   const [recentTrip, setRecentTrip] = useState<any>(null);
 
   const getHost = () => {
     if (typeof window !== 'undefined' && window.location && window.location.hostname) {
       return window.location.hostname;
     }
-    return '192.168.254.205';
+    return '192.168.254.204';
   };
 
   useEffect(() => {
     async function fetchRecentTrip() {
       try {
         const host = getHost();
-        const response = await fetch(`http://${host}:8000/api/v1/passenger/bookings/history`, {
+        const userId = passenger ? (passenger.id || passenger.user_id) : '';
+        const url = userId
+          ? `http://${host}:8000/api/v1/passenger/bookings/history?user_id=${userId}`
+          : `http://${host}:8000/api/v1/passenger/bookings/history`;
+
+        const response = await fetch(url, {
           headers: { 'Accept': 'application/json' },
         });
         const data = await response.json();
         if (data.bookings && data.bookings.length > 0) {
           setRecentTrip(data.bookings[0]);
+        } else {
+          setRecentTrip(null);
         }
       } catch (e) {
         console.log('[Passenger RecentTrip] Poll notice:', e);
+        setRecentTrip(null);
       }
     }
 
     fetchRecentTrip();
-  }, []);
+  }, [passenger]);
 
   if (!recentTrip) {
     return (
       <View style={styles.container}>
         <Text style={styles.heading}>Recent Trip</Text>
         <View style={styles.emptyCard}>
-          <Ionicons name="time-outline" size={24} color={COLORS.gray} />
-          <Text style={styles.emptyText}>No recent trips recorded yet</Text>
+          <View style={styles.emptyIconBadge}>
+            <Ionicons name="compass-outline" size={26} color={COLORS.primary} />
+          </View>
+          <Text style={styles.emptyTitle}>Ready for your first ride?</Text>
+          <Text style={styles.emptyText}>Book a TODA tricycle anytime across Nasugbu to see your recent trips here.</Text>
         </View>
       </View>
     );
@@ -79,7 +92,7 @@ export default function RecentTripCard() {
 
         <View style={styles.footer}>
           <Text style={styles.date}>
-            {new Date(recentTrip.created_at || recentTrip.requested_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+            {`${new Date(recentTrip.created_at || recentTrip.requested_at || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} · ${new Date(recentTrip.created_at || recentTrip.requested_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}`}
           </Text>
           <Text style={styles.price}>
             ₱{parseFloat(recentTrip.fare_amount || 0).toFixed(2)}
@@ -113,27 +126,45 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 18,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
   emptyCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    overflow: 'hidden',
+  },
+  emptyIconBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EEF2FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: COLORS.black,
+    marginBottom: 4,
   },
   emptyText: {
     color: COLORS.gray,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   row: {
     flexDirection: 'row',
