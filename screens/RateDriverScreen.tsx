@@ -9,16 +9,20 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '../theme/colors';
+import { usePassenger } from '../context/PassengerContext';
 
 export default function RateDriverScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const { passenger } = usePassenger();
 
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  function submitRating() {
+  async function submitRating() {
     if (rating === 0) {
       Alert.alert(
         'Rating Required',
@@ -26,6 +30,56 @@ export default function RateDriverScreen() {
       );
       return;
     }
+
+    setSubmitting(true);
+    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '192.168.254.204';
+    let bookingId = route.params?.bookingId || route.params?.booking?.id;
+    const passengerId = passenger ? (passenger.id || passenger.user_id || '') : '';
+
+    if (!bookingId) {
+      try {
+        const histRes = await fetch(`http://${host}:8000/api/v1/passenger/bookings/history?user_id=${passengerId}`, {
+          headers: { 'Accept': 'application/json' },
+        });
+        const histData = await histRes.json();
+        const bookings = histData.bookings || histData.history || [];
+        if (bookings.length > 0) {
+          bookingId = bookings[0].id;
+        }
+      } catch (e) {}
+    }
+
+    if (!bookingId) bookingId = 1;
+
+    const apiUrls = [
+      `http://${host}:8000/api/v1/passenger/bookings/${bookingId}/rate`,
+      `http://192.168.254.204:8000/api/v1/passenger/bookings/${bookingId}/rate`,
+    ];
+
+    for (const url of apiUrls) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            score: rating,
+            comment: comment.trim(),
+            passenger_id: passengerId,
+          }),
+        });
+        if (response.ok) {
+          console.log('[Passenger Rate] Rating submitted and saved to ride_ratings table.');
+          break;
+        }
+      } catch (e) {
+        console.log('[Passenger Rate] Post notice:', e);
+      }
+    }
+
+    setSubmitting(false);
 
     Alert.alert(
       'Thank You!',

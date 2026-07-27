@@ -16,10 +16,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import COLORS from '../theme/colors';
+import { usePassenger } from '../context/PassengerContext';
 
 export default function TrackingScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { passenger: passengerCtx } = usePassenger();
 
   const {
     destination = 'Pinned Location',
@@ -115,53 +117,70 @@ export default function TrackingScreen() {
 
   useEffect(() => {
     let intervalId: any = null;
-    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '192.168.254.205';
+    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '192.168.254.204';
+    const bookingData = route.params?.booking;
+    const bookingId = bookingData ? (bookingData.id || '') : '';
+    const userId = passengerCtx ? (passengerCtx.id || passengerCtx.user_id || '') : '';
+
+    const apiUrls = [
+      bookingId ? `http://${host}:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://${host}:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
+      bookingId ? `http://192.168.254.204:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://192.168.254.204:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
+      bookingId ? `http://192.168.254.205:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://192.168.254.205:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
+      bookingId ? `http://localhost:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://localhost:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
+      bookingId ? `http://127.0.0.1:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://127.0.0.1:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
+      bookingId ? `http://10.0.2.2:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://10.0.2.2:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
+    ];
 
     async function pollTripStatus() {
-      try {
-        const response = await fetch(`http://${host}:8000/api/v1/passenger/bookings/active`, {
-          headers: { 'Accept': 'application/json' }
-        });
-        const data = await response.json();
-        if (data.booking) {
-          const st = data.booking.status;
-          setCurrentStatus(st);
+      for (const url of apiUrls) {
+        try {
+          const response = await fetch(url, {
+            headers: { 'Accept': 'application/json' }
+          });
+          if (!response.ok) continue;
 
-          // Update active driver details from server
-          if (data.booking.driver?.user?.name || data.booking.tricycle?.plate_number) {
-            setActiveDriver({
-              name: data.booking.driver?.user?.name || 'Pedro Ramos',
-              plateNumber: data.booking.tricycle?.plate_number || 'TRV-BRGY8',
-              todaName: data.booking.toda_zone?.name || 'TODA Brgy. 8',
-              mobile: data.booking.driver?.mobile_number || '09188887777',
-            });
-          }
+          const data = await response.json();
+          if (data && data.booking) {
+            const st = data.booking.status;
+            setCurrentStatus(st);
 
-          // Extract real server driver GPS / TODA coordinates
-          const serverDrvLat = parseFloat(data.booking.driver?.current_lat) || parseFloat(data.booking.toda_zone?.center_lat) || (pLat - 0.003);
-          const serverDrvLng = parseFloat(data.booking.driver?.current_lng) || parseFloat(data.booking.toda_zone?.center_lng) || (pLng - 0.004);
-
-          webViewRef.current?.injectJavaScript(`
-            if (window.updateDriverPosition) {
-              window.updateDriverPosition('${st}', ${serverDrvLat}, ${serverDrvLng});
+            // Update active driver details from server
+            if (data.booking.driver?.user?.name || data.booking.tricycle?.plate_number) {
+              setActiveDriver({
+                name: data.booking.driver?.user?.name || 'Pedro Ramos',
+                plateNumber: data.booking.tricycle?.plate_number || 'TRV-BRGY8',
+                todaName: data.booking.toda_zone?.name || 'TODA Brgy. 8',
+                mobile: data.booking.driver?.mobile_number || '09188887777',
+              });
             }
-            true;
-          `);
 
-          if (st === 'arrived') {
-            setStatusMessage('DRIVER ARRIVED: Your tricycle is waiting at pickup location.');
-          } else if (st === 'in_transit') {
-            setStatusMessage('TRIP IN PROGRESS: En route to your destination.');
-          } else if (st === 'completed') {
-            setStatusMessage('TRIP COMPLETED: Thank you for riding with Trivora.');
-            if (intervalId) clearInterval(intervalId);
-            setTimeout(() => {
-              goToTripSummary();
-            }, 800);
+            // Extract real server driver GPS / TODA coordinates
+            const serverDrvLat = parseFloat(data.booking.driver?.current_lat) || parseFloat(data.booking.toda_zone?.center_lat) || (pLat - 0.003);
+            const serverDrvLng = parseFloat(data.booking.driver?.current_lng) || parseFloat(data.booking.toda_zone?.center_lng) || (pLng - 0.004);
+
+            webViewRef.current?.injectJavaScript(`
+              if (window.updateDriverPosition) {
+                window.updateDriverPosition('${st}', ${serverDrvLat}, ${serverDrvLng});
+              }
+              true;
+            `);
+
+            if (st === 'arrived') {
+              setStatusMessage('DRIVER ARRIVED: Your tricycle is waiting at pickup location.');
+            } else if (st === 'in_transit') {
+              setStatusMessage('TRIP IN PROGRESS: En route to your destination.');
+            } else if (st === 'completed') {
+              setStatusMessage('TRIP COMPLETED: Thank you for riding with Trivora.');
+              if (intervalId) clearInterval(intervalId);
+              setTimeout(() => {
+                goToTripSummary();
+              }, 800);
+            }
+            break;
           }
+        } catch (e) {
+          console.log('Status poll notice:', e);
         }
-      } catch (e) {
-        console.log('Status poll notice:', e);
       }
     }
 
@@ -177,9 +196,13 @@ export default function TrackingScreen() {
   */
 
   function goToTripSummary() {
+    const bookingData = route.params?.booking;
+    const bId = route.params?.bookingId || (bookingData ? bookingData.id : null);
     navigation.replace(
       'TripSummary',
       {
+        bookingId: bId,
+        booking: bookingData,
         destination,
         distance,
         eta,
@@ -283,12 +306,21 @@ export default function TrackingScreen() {
     fetch(url2).then(function(r) { return r.json(); }).catch(function() { return null; })
   ]).then(function(results) {
     if (results[0] && results[0].routes && results[0].routes.length > 0) {
-      var coords1 = results[0].routes[0].geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
-      map.removeLayer(driverPolyline);
-      driverPolyline = L.polyline(coords1, { color: '#F59E0B', weight: 6, opacity: 0.9, dashArray: '8, 8' }).addTo(map);
+      var route0 = results[0].routes[0];
+      var dx = (${initialDrvLat} - ${pLat}) * 111000;
+      var dy = (${initialDrvLng} - ${pLng}) * 111000 * Math.cos(${pLat} * Math.PI / 180);
+      var straightDist = Math.sqrt(dx * dx + dy * dy);
+
+      // Filter out OSRM detours if route distance is > 2x straight line or driver is within 300m
+      if (straightDist <= 300 || route0.distance <= straightDist * 2.0) {
+        var coords1 = route0.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+        map.removeLayer(driverPolyline);
+        driverPolyline = L.polyline(coords1, { color: '#F59E0B', weight: 6, opacity: 0.9, dashArray: '8, 8' }).addTo(map);
+      }
     }
     if (results[1] && results[1].routes && results[1].routes.length > 0) {
-      var coords2 = results[1].routes[0].geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+      var route1 = results[1].routes[0];
+      var coords2 = route1.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
       map.removeLayer(tripPolyline);
       tripPolyline = L.polyline(coords2, { color: '#2563EB', weight: 6, opacity: 0.9 }).addTo(map);
     }
@@ -326,9 +358,20 @@ export default function TrackingScreen() {
         }
       }
     } else {
-      // BEFORE PICKUP (accepted / arrived): Both routes render simultaneously!
-      // 1. Update Driver -> Pickup route
-      if (driverPolyline) {
+      // BEFORE PICKUP (accepted / arrived): Update Driver -> Pickup route directly
+      var distToPickup = Math.hypot(curLat - ${pLat}, curLng - ${pLng});
+      if (distToPickup < 0.003 || !driverPolyline || (driverPolyline.getLatLngs() && driverPolyline.getLatLngs().length > 5)) {
+        if (driverPolyline) {
+          driverPolyline.setLatLngs([[curLat, curLng], [${pLat}, ${pLng}]]);
+        } else {
+          driverPolyline = L.polyline([[curLat, curLng], [${pLat}, ${pLng}]], {
+            color: '#F59E0B',
+            weight: 6,
+            opacity: 0.9,
+            dashArray: '8, 8'
+          }).addTo(map);
+        }
+      } else {
         var existingDriverCoords = driverPolyline.getLatLngs();
         if (existingDriverCoords && existingDriverCoords.length > 0) {
           existingDriverCoords[0] = L.latLng(curLat, curLng);
@@ -336,13 +379,6 @@ export default function TrackingScreen() {
         } else {
           driverPolyline.setLatLngs([[curLat, curLng], [${pLat}, ${pLng}]]);
         }
-      } else {
-        driverPolyline = L.polyline([[curLat, curLng], [${pLat}, ${pLng}]], {
-          color: '#F59E0B',
-          weight: 6,
-          opacity: 0.9,
-          dashArray: '8, 8'
-        }).addTo(map);
       }
 
       // 2. Preserve Pickup pin & Pickup -> Destination route intact

@@ -12,10 +12,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../theme/colors';
+import { usePassenger } from '../context/PassengerContext';
 
 export default function SearchingDriverScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { passenger } = usePassenger();
 
   const params = route.params || {};
   const pickupName = params.pickupName || 'Current Location';
@@ -34,7 +36,7 @@ export default function SearchingDriverScreen() {
     if (typeof window !== 'undefined' && window.location && window.location.hostname) {
       return window.location.hostname;
     }
-    return '192.168.254.205';
+    return '192.168.254.204';
   };
 
   // Step 1: Initialize or Request Booking via API
@@ -49,6 +51,7 @@ export default function SearchingDriverScreen() {
 
       const host = getHost();
       const url = `http://${host}:8000/api/v1/passenger/bookings/request`;
+      const userId = passenger ? (passenger.id || passenger.user_id) : '';
 
       try {
         const response = await fetch(url, {
@@ -58,6 +61,8 @@ export default function SearchingDriverScreen() {
             'Accept': 'application/json',
           },
           body: JSON.stringify({
+            user_id: userId,
+            passenger_id: userId,
             pickup_name: pickupName,
             pickup_lat: params.pickupLat || 14.137,
             pickup_lng: params.pickupLng || 120.637,
@@ -89,7 +94,7 @@ export default function SearchingDriverScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [passenger]);
 
   // Step 2: Poll for Driver Acceptance
   useEffect(() => {
@@ -98,7 +103,13 @@ export default function SearchingDriverScreen() {
 
     async function checkStatus() {
       try {
-        const response = await fetch(`http://${host}:8000/api/v1/passenger/bookings/active`, {
+        const currentBookingId = bookingIdRef.current || '';
+        const userId = passenger ? (passenger.id || passenger.user_id || '') : '';
+        const pollUrl = currentBookingId
+          ? `http://${host}:8000/api/v1/passenger/bookings/active?booking_id=${currentBookingId}&user_id=${userId}`
+          : `http://${host}:8000/api/v1/passenger/bookings/active?user_id=${userId}`;
+
+        const response = await fetch(pollUrl, {
           headers: { 'Accept': 'application/json' },
         });
         const text = await response.text();
@@ -134,7 +145,7 @@ export default function SearchingDriverScreen() {
 
     intervalId = setInterval(checkStatus, 3000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [passenger]);
 
   const handleCancel = async () => {
     const host = getHost();

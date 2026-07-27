@@ -24,13 +24,18 @@ export default function LocationCard() {
             });
             if (results && results.length > 0) {
               const item = results[0];
-              const street = item.street || item.name || item.streetNumber;
-              const city = item.subregion || item.city || item.district || 'Nasugbu';
-              if (street && city && !street.includes('+')) {
-                setAddressName(`${street}, ${city}`);
-              } else if (item.formattedAddress) {
-                setAddressName(item.formattedAddress.split(',')[0]);
-              }
+              const isValidName = (str?: string | null) => str && !/^\d+$/.test(str.trim()) && !str.includes('+');
+              
+              const streetNumber = isValidName(item.streetNumber) ? item.streetNumber!.trim() : null;
+              const streetName = isValidName(item.street) ? item.street!.trim() : null;
+              const fullStreet = streetName ? (streetNumber ? `${streetNumber} ${streetName}` : streetName) : null;
+
+              const name = isValidName(item.name) ? item.name!.trim() : null;
+              const district = isValidName(item.district) ? item.district!.trim() : null;
+              const city = isValidName(item.city) ? item.city!.trim() : 'Nasugbu';
+
+              const mainPlace = fullStreet || name || district || 'Brgy. Poblacion';
+              setAddressName(`${mainPlace}, ${city}`);
             }
           }
         }

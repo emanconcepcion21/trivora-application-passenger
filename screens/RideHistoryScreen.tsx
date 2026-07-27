@@ -13,54 +13,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import COLORS from '../theme/colors';
-
-const groupedRides = [
-  {
-    title: 'This Week',
-    data: [
-      {
-        id: '1',
-        date: 'July 24, 2026',
-        pickup: 'Nasugbu Plaza',
-        destination: 'Nasugbu Plaza',
-        fare: '₱35',
-        driver: 'Juan Dela Cruz',
-        rating: '4.8',
-        duration: '15 mins',
-        status: 'Completed',
-      },
-      {
-        id: '2',
-        date: 'July 23, 2026',
-        pickup: 'Jollibee Nasugbu',
-        destination: 'Brgy. Wawa',
-        fare: '₱40',
-        driver: 'Pedro Santos',
-        rating: '4.9',
-        duration: '10 mins',
-        status: 'Completed',
-      },
-    ],
-  },
-  {
-    title: 'Last Month',
-    data: [
-      {
-        id: '3',
-        date: 'July 22, 2026',
-        pickup: 'SM Hypermarket',
-        destination: 'Brgy. Bucana',
-        fare: '₱55',
-        driver: 'Mark Reyes',
-        rating: '5.0',
-        duration: '20 mins',
-        status: 'Completed',
-      },
-    ],
-  },
-];
+import { usePassenger } from '../context/PassengerContext';
 
 export default function RideHistoryScreen() {
+  const { passenger } = usePassenger();
   const [ridesList, setRidesList] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -69,42 +25,62 @@ export default function RideHistoryScreen() {
     if (typeof window !== 'undefined' && window.location && window.location.hostname) {
       return window.location.hostname;
     }
-    return '192.168.254.205';
+    return '192.168.254.204';
   };
 
   useEffect(() => {
     async function fetchHistory() {
       try {
         const host = getHost();
-        const res = await fetch(`http://${host}:8000/api/v1/passenger/bookings/history`, {
+        const userId = passenger ? (passenger.id || passenger.user_id) : '';
+        const url = userId
+          ? `http://${host}:8000/api/v1/passenger/bookings/history?user_id=${userId}`
+          : `http://${host}:8000/api/v1/passenger/bookings/history`;
+
+        const res = await fetch(url, {
           headers: { 'Accept': 'application/json' },
         });
         const data = await res.json();
         const rawBookings = data.bookings || data.history || [];
-        if (rawBookings.length > 0) {
-          const parsed = rawBookings.map((b: any) => ({
-            id: b.id.toString(),
-            bookingCode: b.booking_code,
-            date: new Date(b.created_at || b.requested_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }),
-            pickup: b.pickup_name || 'Pickup Point',
-            destination: b.dropoff_name || 'Destination Point',
-            fare: `₱${parseFloat(b.fare_amount || 0).toFixed(2)}`,
-            driver: b.driver?.user?.name || 'Assigned Driver',
-            rating: b.driver?.rating || '5.0',
-            duration: b.estimated_duration_mins ? `${b.estimated_duration_mins} mins` : '10 mins',
-            status: (b.status || 'completed').toUpperCase(),
-          }));
+        if (rawBookings && rawBookings.length > 0) {
+          const parsed = rawBookings.map((b: any) => {
+            const dateObj = new Date(b.created_at || b.requested_at || Date.now());
+            const formattedDate = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+            const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+            const ratingObj = Array.isArray(b.rating) ? b.rating[0] : b.rating;
+            const tripRating = ratingObj?.score ? `${Number(ratingObj.score).toFixed(1)} Stars` : 'Not Rated Yet';
+            const tripComment = ratingObj?.comment || null;
+
+            return {
+              id: b.id.toString(),
+              bookingCode: b.booking_code,
+              date: `${formattedDate} · ${formattedTime}`,
+              time: formattedTime,
+              pickup: b.pickup_name || 'Pickup Point',
+              destination: b.dropoff_name || 'Destination Point',
+              fare: `₱${parseFloat(b.fare_amount || 0).toFixed(2)}`,
+              driver: b.driver?.user?.name || 'Assigned Driver',
+              rating: tripRating,
+              comment: tripComment,
+              duration: b.estimated_duration_mins ? `${b.estimated_duration_mins} mins` : '10 mins',
+              status: (b.status || 'completed').toUpperCase(),
+            };
+          });
           setRidesList(parsed);
+        } else {
+          setRidesList([]);
         }
       } catch (e) {
         console.log('[Passenger History] Poll notice:', e);
+        setRidesList([]);
       } finally {
         setLoading(false);
       }
     }
 
     fetchHistory();
-  }, []);
+  }, [passenger]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -125,9 +101,18 @@ export default function RideHistoryScreen() {
         </View>
       ) : ridesList.length === 0 ? (
         <View style={styles.emptyWrapper}>
-          <Ionicons name="receipt-outline" size={48} color={COLORS.gray} />
+          <View style={styles.emptyIconBadge}>
+            <Ionicons name="receipt-outline" size={42} color={COLORS.primary} />
+          </View>
           <Text style={styles.emptyTitle}>No Ride History Yet</Text>
-          <Text style={styles.emptySub}>Your completed tricycle trips will appear here.</Text>
+          <Text style={styles.emptySub}>You haven't completed any tricycle rides yet. Book your first ride in Nasugbu!</Text>
+          <TouchableOpacity
+            style={styles.emptyButton}
+            onPress={() => navigation.navigate('Home')}
+          >
+            <Ionicons name="location" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={styles.emptyButtonText}>Book a Ride Now</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <SectionList
@@ -340,6 +325,12 @@ export default function RideHistoryScreen() {
                       </Text>
 
                     </View>
+
+                    {item.comment ? (
+                      <Text style={{ fontSize: 13, color: '#475569', fontStyle: 'italic', marginTop: 6, marginBottom: 4 }}>
+                        "{item.comment}"
+                      </Text>
+                    ) : null}
 
                     <View
                       style={
@@ -600,21 +591,46 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   emptyWrapper: {
-    paddingTop: 80,
+    paddingTop: 60,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 30,
+  },
+  emptyIconBadge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#EEF2FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.black,
-    marginTop: 12,
+    marginTop: 4,
   },
   emptySub: {
     fontSize: 13,
     color: COLORS.gray,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 6,
+    lineHeight: 18,
+  },
+  emptyButton: {
+    marginTop: 20,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 3,
+  },
+  emptyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
 });
