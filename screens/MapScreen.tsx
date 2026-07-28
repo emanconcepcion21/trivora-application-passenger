@@ -20,8 +20,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import COLORS from '../theme/colors';
 
-const ORS_API_KEY =
-  'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjRmY2RkOThjMzNkMTQ2YzI5ZDcxNDVhMDM5MThhNTEyIiwiaCI6Im11cm11cjY0In0=';
+// OSRM is used for routing (free, no API key required)
 
 type Barangay = {
   id: string;
@@ -333,111 +332,42 @@ export default function MapScreen() {
 
     setRouteCoordinates([]);
 
-    if (
-      !ORS_API_KEY ||
-      ORS_API_KEY.trim().length === 0
-    ) {
-      Alert.alert(
-        'OpenRouteService API Key Missing',
-        'Please add your OpenRouteService API key in MapScreen.tsx.'
-      );
-
-      return;
-    }
-
     setRouteLoading(true);
 
     try {
-      const response = await fetch(
-        'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
-        {
-          method: 'POST',
+      // OSRM public API — free, no API key required
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${location.longitude},${location.latitude};${barangay.longitude},${barangay.latitude}?overview=full&geometries=geojson`;
 
-          headers: {
-            Authorization: ORS_API_KEY,
-            'Content-Type':
-              'application/json',
-          },
-
-          body: JSON.stringify({
-            coordinates: [
-              [
-                location.longitude,
-                location.latitude,
-              ],
-              [
-                barangay.longitude,
-                barangay.latitude,
-              ],
-            ],
-          }),
-        }
-      );
+      const response = await fetch(osrmUrl);
 
       if (!response.ok) {
-        const errorText =
-          await response.text();
-
-        console.log(
-          'OpenRouteService Error:',
-          errorText
-        );
-
-        throw new Error(
-          'OpenRouteService request failed'
-        );
+        const errorText = await response.text();
+        console.log('OSRM Error:', errorText);
+        throw new Error('Routing request failed');
       }
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
-      if (
-        !data.features ||
-        data.features.length === 0
-      ) {
-        throw new Error(
-          'No route found'
-        );
+      if (!data.routes || data.routes.length === 0) {
+        throw new Error('No route found');
       }
 
-      const route =
-        data.features[0];
+      const route = data.routes[0];
+      const leg = route.legs[0];
 
-      const summary =
-        route.properties.summary;
+      const km = leg.distance / 1000;
+      const mins = Math.ceil(leg.duration / 60);
 
-      const km =
-        summary.distance / 1000;
+      setDistance(`${km.toFixed(2)} km`);
+      setEta(`${mins} mins`);
 
-      const mins =
-        Math.ceil(
-          summary.duration / 60
-        );
+      const fare = 20 + km * 5;
+      setEstimatedFare(`₱${fare.toFixed(0)}`);
 
-      setDistance(
-        `${km.toFixed(2)} km`
-      );
-
-      setEta(
-        `${mins} mins`
-      );
-
-      const fare =
-        20 + km * 5;
-
-      setEstimatedFare(
-        `₱${fare.toFixed(0)}`
-      );
-
-      setRouteCoordinates(
-        route.geometry.coordinates
-      );
+      // OSRM GeoJSON coordinates are [lng, lat] — same format as ORS
+      setRouteCoordinates(route.geometry.coordinates);
     } catch (error) {
-      console.log(
-        'Route Error:',
-        error
-      );
-
+      console.log('Route Error:', error);
       Alert.alert(
         'Route Error',
         'Unable to load the driving route. Please try again.'

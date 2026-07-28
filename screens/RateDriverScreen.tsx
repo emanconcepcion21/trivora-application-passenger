@@ -32,7 +32,7 @@ export default function RateDriverScreen() {
     }
 
     setSubmitting(true);
-    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '192.168.254.204';
+    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '172.20.10.2';
     let bookingId = route.params?.bookingId || route.params?.booking?.id;
     const passengerId = passenger ? (passenger.id || passenger.user_id || '') : '';
 
@@ -53,7 +53,7 @@ export default function RateDriverScreen() {
 
     const apiUrls = [
       `http://${host}:8000/api/v1/passenger/bookings/${bookingId}/rate`,
-      `http://192.168.254.204:8000/api/v1/passenger/bookings/${bookingId}/rate`,
+      `http://172.20.10.2:8000/api/v1/passenger/bookings/${bookingId}/rate`,
     ];
 
     for (const url of apiUrls) {
