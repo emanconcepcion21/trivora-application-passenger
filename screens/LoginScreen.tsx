@@ -67,13 +67,13 @@ export default function LoginScreen() {
       if (typeof window !== 'undefined' && window.location && window.location.hostname) {
         return window.location.hostname;
       }
-      return '192.168.254.204';
+      return '172.20.10.2';
     };
 
     const host = getHost();
     const apiUrls = [
       `http://${host}:8000/api/v1/passenger/login`,
-      'http://192.168.254.204:8000/api/v1/passenger/login',
+      'http://172.20.10.2:8000/api/v1/passenger/login',
       'http://192.168.254.205:8000/api/v1/passenger/login',
       'http://localhost:8000/api/v1/passenger/login',
       'http://127.0.0.1:8000/api/v1/passenger/login',

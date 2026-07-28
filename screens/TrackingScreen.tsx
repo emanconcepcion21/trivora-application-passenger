@@ -117,14 +117,14 @@ export default function TrackingScreen() {
 
   useEffect(() => {
     let intervalId: any = null;
-    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '192.168.254.204';
+    const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '172.20.10.2';
     const bookingData = route.params?.booking;
     const bookingId = bookingData ? (bookingData.id || '') : '';
     const userId = passengerCtx ? (passengerCtx.id || passengerCtx.user_id || '') : '';
 
     const apiUrls = [
       bookingId ? `http://${host}:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://${host}:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
-      bookingId ? `http://192.168.254.204:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://192.168.254.204:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
+      bookingId ? `http://172.20.10.2:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://172.20.10.2:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
       bookingId ? `http://192.168.254.205:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://192.168.254.205:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
       bookingId ? `http://localhost:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://localhost:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
       bookingId ? `http://127.0.0.1:8000/api/v1/passenger/bookings/active?booking_id=${bookingId}&user_id=${userId}` : `http://127.0.0.1:8000/api/v1/passenger/bookings/active?user_id=${userId}`,
